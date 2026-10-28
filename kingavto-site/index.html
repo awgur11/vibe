@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#111215">
+  <meta name="description" content="KINGAVTO — демонстрационный макет интернет-магазина автозапчастей: категории, товары, подбор и новости.">
+  <title>KINGAVTO — автозапчасти оптом и в розницу</title>
+  <link rel="preload" href="assets/hero-car.webp" as="image" fetchpriority="high">
+  <link rel="stylesheet" href="styles.css">
+  <script src="script.js" defer></script>
+</head>
+<body>
+  <!-- Локальные SVG-иконки без внешних библиотек -->
+  <svg xmlns="http://www.w3.org/2000/svg" class="svg-defs" aria-hidden="true">
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.7" cy="10.7" r="7.1"/><path d="m16 16 5 5"/></symbol>
+    <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="M5 5 19 19M19 5 5 19"/></symbol>
+    <symbol id="i-heart" viewBox="0 0 24 24"><path d="M20.8 5.5c-2.1-2-5.1-1.8-6.9.2L12 7.6l-1.9-1.9C8.3 3.7 5.3 3.5 3.2 5.5c-2 2-2 5.2 0 7.2L12 21l8.8-8.3c2-2 2-5.2 0-7.2Z"/></symbol>
+    <symbol id="i-chart" viewBox="0 0 24 24"><rect x="3" y="12" width="4" height="9" rx="1"/><rect x="10" y="7" width="4" height="14" rx="1"/><rect x="17" y="3" width="4" height="18" rx="1"/></symbol>
+    <symbol id="i-cart" viewBox="0 0 24 24"><path d="M2 3h2.8l2.1 11.6h12.7l2-8.1H5.5"/><circle cx="9" cy="20" r="1.3"/><circle cx="18.2" cy="20" r="1.3"/></symbol>
+    <symbol id="i-phone" viewBox="0 0 24 24"><path d="M7 3H4.3C3.5 3 3 3.7 3 4.5c0 9.1 7.4 16.5 16.5 16.5.8 0 1.5-.5 1.5-1.3V17l-5.3-2-2.1 2.1a16 16 0 0 1-6.7-6.7L9 8.3 7 3Z"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M4 12h16M13 5l7 7-7 7"/></symbol>
+    <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+    <symbol id="i-truck" viewBox="0 0 24 24"><path d="M2 5h12v12H2zM14 9h4l4 4v4h-8M3 17h2M18 17h2"/><circle cx="7" cy="18" r="2"/><circle cx="18" cy="18" r="2"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 2 3.5 5.5v6.6c0 5.4 3.5 8.4 8.5 10 5-1.6 8.5-4.6 8.5-10V5.5L12 2Z"/><path d="m8.3 12 2.4 2.4 4.9-5"/></symbol>
+    <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="m10 2-.5 2.2-2.3 1L5.3 4 4 5.3l1.2 1.9-1 2.3L2 10v4l2.2.5 1 2.3L4 18.7 5.3 20l1.9-1.2 2.3 1L10 22h4l.5-2.2 2.3-1 1.9 1.2 1.3-1.3-1.2-1.9 1-2.3L22 14v-4l-2.2-.5-1-2.3L20 5.3 18.7 4l-1.9 1.2-2.3-1L14 2z"/></symbol>
+    <symbol id="i-box" viewBox="0 0 24 24"><path d="m12 2 9 5v10l-9 5-9-5V7l9-5ZM3 7l9 5 9-5M12 12v10"/></symbol>
+    <symbol id="i-headset" viewBox="0 0 24 24"><path d="M3 13V11a9 9 0 0 1 18 0v2M3 13h4v7H5a2 2 0 0 1-2-2v-5ZM21 13h-4v7h2a2 2 0 0 0 2-2v-5ZM17 20c0 2-2 2-5 2"/></symbol>
+    <symbol id="i-trophy" viewBox="0 0 24 24"><path d="M7 3h10v9a5 5 0 0 1-10 0V3ZM7 5H3v4a4 4 0 0 0 4 4M17 5h4v4a4 4 0 0 1-4 4M12 17v4M8 21h8"/></symbol>
+    <symbol id="i-users" viewBox="0 0 24 24"><circle cx="8" cy="8" r="3"/><path d="M2 21v-3a6 6 0 0 1 12 0v3H2ZM17 5a3 3 0 0 1 0 6M16 15a5 5 0 0 1 6 5v1h-5"/></symbol>
+    <symbol id="i-mail" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m3 6 9 7 9-7"/></symbol>
+    <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 22s8-8 8-14a8 8 0 0 0-16 0c0 6 8 14 8 14Z"/><circle cx="12" cy="8" r="2.5"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 1 1 8 0v3"/></symbol>
+    <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 2v6M17 2v6M3 10h18"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18M8 6V3h8v3M6 6l1 15h10l1-15M10 10v7M14 10v7"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m4 12 5 5L20 6"/></symbol>
+  </svg>
+
+  <header class="site-header" id="top">
+    <div class="header-main">
+      <div class="container header-main-inner">
+        <a href="#top" class="brand" aria-label="KINGAVTO — на главную"><img src="assets/kingavto-logo.png" width="216" height="76" alt="KINGAVTO"></a>
+        <form class="header-search" id="headerSearch" role="search">
+          <svg class="icon"><use href="#i-search"/></svg>
+          <input id="siteSearch" type="search" placeholder="Поиск запчастей по названию или артикулу" aria-label="Поиск товаров" autocomplete="off">
+          <button type="submit" aria-label="Найти"><svg class="icon"><use href="#i-search"/></svg></button>
+        </form>
+        <div class="header-actions">
+          <button class="header-action" id="favoritesButton" type="button" title="Избранное"><span class="action-icon"><svg class="icon"><use href="#i-heart"/></svg><span class="counter" id="favoritesCount">0</span></span><span>Избранное</span></button>
+          <button class="header-action" id="compareButton" type="button" title="Сравнение"><span class="action-icon"><svg class="icon"><use href="#i-chart"/></svg><span class="counter" id="compareCount">0</span></span><span>Сравнение</span></button>
+          <button class="header-action" id="cartButton" type="button" title="Корзина"><span class="action-icon"><svg class="icon"><use href="#i-cart"/></svg><span class="counter" id="cartCount">0</span></span><span>Корзина</span></button>
+        </div>
+        <a class="header-phone" href="tel:+380673752355"><svg class="icon"><use href="#i-phone"/></svg><span><b>+38 (067) 375 23 55</b><small>Пн–Пт 09:00–20:00</small></span></a>
+        <button id="mobileNavToggle" class="mobile-nav-toggle" aria-expanded="false" aria-controls="mainNav" aria-label="Открыть меню"><svg class="icon"><use href="#i-menu"/></svg></button>
+      </div>
+    </div>
+    <nav class="header-nav" id="mainNav" aria-label="Главное меню">
+      <div class="container nav-inner">
+        <button type="button" class="catalog-toggle btn btn-red" id="catalogToggle" aria-expanded="false" aria-controls="catalogDropdown"><svg class="icon"><use href="#i-menu"/></svg>Каталог</button>
+        <a class="nav-active" href="#top">Главная</a>
+        <a href="#categories">Запчасти</a>
+        <a href="#categories" data-select-category="tires">Шины</a>
+        <a href="#categories" data-select-category="wheels">Диски</a>
+        <a href="#categories" data-select-category="accessories">Автоаксессуары</a>
+        <a href="#categories" data-select-category="tools">Инструменты</a>
+        <a href="blog.html">Блог</a>
+        <a href="contacts.html">Контакты</a>
+        <div class="catalog-dropdown" id="catalogDropdown" hidden>
+          <p class="dropdown-title">Разделы каталога</p>
+          <div class="dropdown-grid" id="catalogDropdownLinks"></div>
+        </div>
+      </div>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero" aria-labelledby="heroTitle">
+      <div class="container hero-inner">
+        <div class="hero-copy">
+          <p class="eyebrow">KINGAVTO · МАГАЗИН АВТОЗАПЧАСТЕЙ</p>
+          <h1 id="heroTitle">АВТОЗАПЧАСТИ <span>ОПТОМ И В РОЗНИЦУ</span></h1>
+          <p class="hero-subtitle">Оригинальные запчасти и качественные аналоги для всех марок автомобилей</p>
+          <div class="hero-buttons"><a href="#categories" class="btn btn-red">Перейти в каталог <svg class="icon"><use href="#i-arrow"/></svg></a><a href="#vin" class="btn btn-outline"><svg class="icon"><use href="#i-gear"/></svg> Подобрать запчасти</a></div>
+          <div class="hero-perks"><span><svg class="icon"><use href="#i-shield"/></svg>Тысячи позиций<br>в каталоге</span><span><svg class="icon"><use href="#i-truck"/></svg>Доставка<br>по Украине</span><span><svg class="icon"><use href="#i-gear"/></svg>Помощь<br>в подборе</span></div>
+        </div>
+        <div class="hero-art"><img src="assets/hero-car.webp" width="960" height="446" alt="Автомобиль и комплектующие: тормозные диски, фильтры, пружины" fetchpriority="high"></div>
+      </div>
+    </section>
+
+    <section class="section section-categories" id="categories" aria-labelledby="categoriesTitle">
+      <div class="container">
+        <div class="section-head"><h2 id="categoriesTitle">Популярные категории</h2><a class="section-more" href="#categoryGrid">Все категории <svg class="icon"><use href="#i-arrow"/></svg></a></div>
+        <!-- 12 карточек в обычной CSS Grid, без карусели -->
+        <div class="categories-grid" id="categoryGrid">
+          <a href="#products" class="category-card" data-category="parts"><img src="assets/cat-parts.webp" alt="Автомобильные запчасти" loading="lazy"><strong>Запчасти</strong><span>Двигатель, подвеска, топливная система</span><svg class="icon"><use href="#i-arrow"/></svg></a>
+          <a href="#products" class="category-card" data-category="tires"><img src="assets/cat-tires.webp" alt="Автомобильные шины" loading="lazy"><strong>Шины</strong><span>Летние, зимние, всесезонные</span><svg class="icon"><use href="#i-arrow"/></svg></a>
+          <a href="#products" class="category-card" data-category="wheels"><img src="assets/cat-wheels.webp" alt="Колёсные диски" loading="lazy"><strong>Диски</strong><span>Литые, стальные, кованые</span><svg class="icon"><use href="#i-arrow"/></svg></a>
+          <a href="#products" class="category-card" data-category="tools"><img src="assets/cat-tools.webp" alt="Автоинструменты" loading="lazy"><strong>Инструменты</strong><span>Профессиональный автоинструмент</span><svg class="icon"><use href="#i-arrow"/></svg></a>
+          <a href="#products" class="category-card" data-category="accessories"><img src="assets/cat-accessories.webp" alt="Аксессуары для автомобиля" loading="lazy"><strong>Автоаксессуары</strong><span>Комфорт, безопасность и стиль</span><svg class="icon"><use href="#i-arrow"/></svg></a>
+          <a href="#products" class="category-card" data-category="oils"><img src="assets/cat-oils.webp" alt="Автомобильные масла" loading="lazy"><strong>Масла</strong><span>Моторные, трансмиссионные</span><svg class="icon"><use href="#i-arrow"/></svg></a>
+          <a href="#products" class="category-card" data-category="batteries"><img src="assets/cat-batteries.webp" alt="Автомобильные аккумуляторы" loading="lazy"><strong>Аккумуляторы</strong><span>Для легковых и грузовых авто</span><svg class="icon"><use href="#i-arrow"/></svg></a>
+          <a href="#products" class="category-card" data-category="brakes"><img src="assets/cat-brakes.webp" alt="Тормозные диски и колодки" loading="lazy"><strong>Тормозная система</strong><span>Диски, колодки, суппорты</span><svg class="icon"><use href="#i-arrow"/></svg></a>
+          <a href="#products" class="category-card" data-category="suspension"><img src="assets/cat-suspension.webp" alt="Амортизаторы и пружины" loading="lazy"><strong>Подвеска</strong><span>Амортизаторы, пружины, рычаги</span><svg class="icon"><use href="#i-arrow"/></svg></a>
+          <a href="#products" class="category-card" data-category="filters"><img src="assets/cat-filters.webp" alt="Автомобильные фильтры" loading="lazy"><strong>Фильтры</strong><span>Масляные, воздушные, салонные</span><svg class="icon"><use href="#i-arrow"/></svg></a>
+          <a href="#products" class="category-card" data-category="lighting"><img src="assets/cat-lighting.webp" alt="Фары и лампы для авто" loading="lazy"><strong>Освещение</strong><span>Лампы, фары, LED-освещение</span><svg class="icon"><use href="#i-arrow"/></svg></a>
+          <a href="#products" class="category-card" data-category="electrics"><img src="assets/cat-electrics.webp" alt="Электрика для автомобиля" loading="lazy"><strong>Электрика</strong><span>Генераторы, стартеры, датчики</span><svg class="icon"><use href="#i-arrow"/></svg></a>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="products" aria-labelledby="productsTitle">
+      <div class="container">
+        <div class="section-head"><h2 id="productsTitle">Популярные товары</h2><a href="#products" class="section-more" id="showAllProducts">Смотреть все товары <svg class="icon"><use href="#i-arrow"/></svg></a></div>
+        <div class="product-filters" role="group" aria-label="Фильтр популярных товаров">
+          <button type="button" class="filter-btn is-active" data-filter="all" aria-pressed="true">Все товары</button>
+          <button type="button" class="filter-btn" data-filter="parts" aria-pressed="false">Запчасти</button>
+          <button type="button" class="filter-btn" data-filter="tires" aria-pressed="false">Шины</button>
+          <button type="button" class="filter-btn" data-filter="wheels" aria-pressed="false">Диски</button>
+          <button type="button" class="filter-btn" data-filter="accessories" aria-pressed="false">Автоаксессуары</button>
+          <button type="button" class="filter-btn" data-filter="tools" aria-pressed="false">Инструменты</button>
+        </div>
+        <div class="products-grid" id="productsGrid">
+          <article class="product-card" data-id="p1" data-category="parts brakes" data-name="Тормозные диски Bosch 0986479C14"><button type="button" class="favorite-toggle" aria-label="Добавить в избранное" data-favorite="p1"><svg class="icon"><use href="#i-heart"/></svg></button><div class="product-photo"><img src="assets/product-discs.webp" alt="Тормозные диски Bosch" loading="lazy"></div><h3>Тормозные диски Bosch 0986479C14</h3><p>Диаметр: 256 мм<br>Применяемость: VW, Skoda</p><div class="product-bottom"><b>2 890 грн</b><span class="in-stock">В наличии</span></div><button class="btn btn-red add-cart" data-id="p1" data-price="2890" data-name="Тормозные диски Bosch"> <svg class="icon"><use href="#i-cart"/></svg>В корзину</button></article>
+          <article class="product-card" data-id="p2" data-category="parts filters" data-name="Масляный фильтр Mann-Filter W712/95"><button type="button" class="favorite-toggle" aria-label="Добавить в избранное" data-favorite="p2"><svg class="icon"><use href="#i-heart"/></svg></button><div class="product-photo"><img src="assets/product-oilfilter.webp" alt="Масляный фильтр Mann" loading="lazy"></div><h3>Масляный фильтр Mann-Filter W712/95</h3><p>Тип: накручиваемый<br>Применяемость: VW, Audi</p><div class="product-bottom"><b>320 грн</b><span class="in-stock">В наличии</span></div><button class="btn btn-red add-cart" data-id="p2" data-price="320" data-name="Масляный фильтр Mann"><svg class="icon"><use href="#i-cart"/></svg>В корзину</button></article>
+          <article class="product-card" data-id="p3" data-category="parts suspension" data-name="Амортизатор передний KYB 333787"><button type="button" class="favorite-toggle" aria-label="Добавить в избранное" data-favorite="p3"><svg class="icon"><use href="#i-heart"/></svg></button><div class="product-photo"><img src="assets/product-shock.webp" alt="Амортизатор KYB" loading="lazy"></div><h3>Амортизатор передний KYB 333787</h3><p>Применяемость: Toyota, Lexus<br>Тип: газомасляный</p><div class="product-bottom"><b>4 650 грн</b><span class="in-stock">В наличии</span></div><button class="btn btn-red add-cart" data-id="p3" data-price="4650" data-name="Амортизатор KYB"><svg class="icon"><use href="#i-cart"/></svg>В корзину</button></article>
+          <article class="product-card" data-id="p4" data-category="parts brakes" data-name="Тормозные колодки TRW GDB1956"><button type="button" class="favorite-toggle" aria-label="Добавить в избранное" data-favorite="p4"><svg class="icon"><use href="#i-heart"/></svg></button><div class="product-photo"><img src="assets/product-pads.webp" alt="Тормозные колодки TRW" loading="lazy"></div><h3>Тормозные колодки TRW GDB1956</h3><p>Применяемость: VW, Audi<br>Передние дисковые</p><div class="product-bottom"><b>1 280 грн</b><span class="in-stock">В наличии</span></div><button class="btn btn-red add-cart" data-id="p4" data-price="1280" data-name="Колодки TRW"><svg class="icon"><use href="#i-cart"/></svg>В корзину</button></article>
+          <article class="product-card" data-id="p5" data-category="parts batteries" data-name="Аккумулятор VARTA Blue Dynamic 60Ah"><button type="button" class="favorite-toggle" aria-label="Добавить в избранное" data-favorite="p5"><svg class="icon"><use href="#i-heart"/></svg></button><div class="product-photo"><img src="assets/product-battery.webp" alt="Аккумулятор VARTA" loading="lazy"></div><h3>Аккумулятор VARTA Blue Dynamic 60Ah</h3><p>Напряжение: 12 В<br>Емкость: 60 А·ч</p><div class="product-bottom"><b>4 190 грн</b><span class="in-stock">В наличии</span></div><button class="btn btn-red add-cart" data-id="p5" data-price="4190" data-name="Аккумулятор VARTA"><svg class="icon"><use href="#i-cart"/></svg>В корзину</button></article>
+          <article class="product-card" data-id="p6" data-category="tires" data-name="Зимние шины 205/55 R16"><button type="button" class="favorite-toggle" aria-label="Добавить в избранное" data-favorite="p6"><svg class="icon"><use href="#i-heart"/></svg></button><div class="product-photo"><img src="assets/cat-tires.webp" alt="Зимние шины" loading="lazy"></div><h3>Зимние шины 205/55 R16</h3><p>Сезон: зима<br>Диаметр: R16</p><div class="product-bottom"><b>2 700 грн</b><span class="in-stock">В наличии</span></div><button class="btn btn-red add-cart" data-id="p6" data-price="2700" data-name="Зимние шины R16"><svg class="icon"><use href="#i-cart"/></svg>В корзину</button></article>
+          <article class="product-card" data-id="p7" data-category="wheels" data-name="Литой колёсный диск R17"><button type="button" class="favorite-toggle" aria-label="Добавить в избранное" data-favorite="p7"><svg class="icon"><use href="#i-heart"/></svg></button><div class="product-photo"><img src="assets/cat-wheels.webp" alt="Литой диск" loading="lazy"></div><h3>Литой колёсный диск R17</h3><p>Диаметр: R17<br>Цвет: графит</p><div class="product-bottom"><b>3 500 грн</b><span class="in-stock">В наличии</span></div><button class="btn btn-red add-cart" data-id="p7" data-price="3500" data-name="Литой диск R17"><svg class="icon"><use href="#i-cart"/></svg>В корзину</button></article>
+          <article class="product-card" data-id="p8" data-category="tools" data-name="Набор автомобильных инструментов"><button type="button" class="favorite-toggle" aria-label="Добавить в избранное" data-favorite="p8"><svg class="icon"><use href="#i-heart"/></svg></button><div class="product-photo"><img src="assets/cat-tools.webp" alt="Набор инструментов" loading="lazy"></div><h3>Набор автомобильных инструментов</h3><p>Комплект для обслуживания авто</p><div class="product-bottom"><b>1 850 грн</b><span class="in-stock">В наличии</span></div><button class="btn btn-red add-cart" data-id="p8" data-price="1850" data-name="Набор инструментов"><svg class="icon"><use href="#i-cart"/></svg>В корзину</button></article>
+          <article class="product-card" data-id="p9" data-category="accessories" data-name="Комплект ковриков для автомобиля"><button type="button" class="favorite-toggle" aria-label="Добавить в избранное" data-favorite="p9"><svg class="icon"><use href="#i-heart"/></svg></button><div class="product-photo"><img src="assets/cat-accessories.webp" alt="Автоаксессуары и коврики" loading="lazy"></div><h3>Комплект ковриков для автомобиля</h3><p>Износостойкий материал</p><div class="product-bottom"><b>890 грн</b><span class="in-stock">В наличии</span></div><button class="btn btn-red add-cart" data-id="p9" data-price="890" data-name="Автомобильные коврики"><svg class="icon"><use href="#i-cart"/></svg>В корзину</button></article>
+          <article class="product-card" data-id="p10" data-category="parts oils" data-name="Моторное масло синтетическое"><button type="button" class="favorite-toggle" aria-label="Добавить в избранное" data-favorite="p10"><svg class="icon"><use href="#i-heart"/></svg></button><div class="product-photo"><img src="assets/cat-oils.webp" alt="Моторное масло" loading="lazy"></div><h3>Моторное масло синтетическое</h3><p>Для бензиновых и дизельных ДВС</p><div class="product-bottom"><b>1 150 грн</b><span class="in-stock">В наличии</span></div><button class="btn btn-red add-cart" data-id="p10" data-price="1150" data-name="Моторное масло"><svg class="icon"><use href="#i-cart"/></svg>В корзину</button></article>
+        </div>
+        <p class="empty-results" id="emptyProducts" hidden>По вашему запросу товары не найдены. Попробуйте другой запрос или раздел.</p>
+        <p class="demo-hint">Демо-карточки: ассортимент, цены и наличие нужно подключить к базе данных магазина.</p>
+      </div>
+    </section>
+
+    <section class="section benefits-section" aria-labelledby="benefitsTitle">
+      <div class="container"><div class="section-head"><h2 id="benefitsTitle">Наши преимущества</h2></div><div class="benefits-grid">
+        <div class="benefit"><svg class="icon"><use href="#i-truck"/></svg><div><h3>Быстрая доставка</h3><p>Отправка по всей Украине удобной службой доставки</p></div></div>
+        <div class="benefit"><svg class="icon"><use href="#i-box"/></svg><div><h3>Большой выбор</h3><p>Запчасти и аксессуары для разных марок автомобилей</p></div></div>
+        <div class="benefit"><svg class="icon"><use href="#i-shield"/></svg><div><h3>Гарантия качества</h3><p>Работаем с проверенными брендами и поставщиками</p></div></div>
+        <div class="benefit"><svg class="icon"><use href="#i-headset"/></svg><div><h3>Помощь в подборе</h3><p>Поможем найти подходящие детали по параметрам авто</p></div></div>
+      </div></div>
+    </section>
+
+    <section class="section" id="about" aria-labelledby="aboutTitle"><div class="container">
+      <div class="about-panel"><div class="about-copy"><p class="eyebrow">О МАГАЗИНЕ</p><h2 id="aboutTitle">О нас</h2><p>KINGAVTO — интернет-магазин автозапчастей и автоаксессуаров. Помогаем подобрать необходимые товары, разобраться в характеристиках и найти подходящие решения для вашего автомобиля.</p><a href="contacts.html" class="btn btn-red">Связаться с нами <svg class="icon"><use href="#i-arrow"/></svg></a></div>
+        <div class="about-facts"><div><svg class="icon"><use href="#i-trophy"/></svg><b>Опыт</b><small>в подборе запчастей</small></div><div><svg class="icon"><use href="#i-box"/></svg><b>Каталог</b><small>товаров разных категорий</small></div><div><svg class="icon"><use href="#i-truck"/></svg><b>Доставка</b><small>по Украине</small></div><div><svg class="icon"><use href="#i-users"/></svg><b>Поддержка</b><small>перед покупкой</small></div></div>
+        <div class="about-image" role="img" aria-label="Автомобиль, символика KINGAVTO"></div>
+      </div>
+    </div></section>
+
+    <section class="section" id="news" aria-labelledby="newsTitle"><div class="container">
+      <div class="section-head"><h2 id="newsTitle">Последние новости</h2><div class="news-controls"><a class="section-more" href="blog.html">Все новости <svg class="icon"><use href="#i-arrow"/></svg></a><button class="round-arrow" id="newsPrev" type="button" aria-label="Предыдущие новости">‹</button><button class="round-arrow" id="newsNext" type="button" aria-label="Следующие новости">›</button></div></div>
+      <div class="news-track" id="newsTrack" tabindex="0" aria-label="Карусель последних новостей">
+        <article class="news-card"><img src="assets/news-brakes.webp" loading="lazy" alt="Тормозные колодки"><div><time datetime="2026-10-12"><svg class="icon"><use href="#i-calendar"/></svg>12 октября 2026</time><h3>Как выбрать тормозные колодки</h3><p>На что обратить внимание при подборе запчастей для тормозной системы.</p><a href="blog-article.html?slug=kak-vybrat-tormoznye-kolodki" aria-label="Помощь с выбором колодок"><svg class="icon"><use href="#i-arrow"/></svg></a></div></article>
+        <article class="news-card"><img src="assets/news-winter.webp" loading="lazy" alt="Зимние автомобильные шины"><div><time datetime="2026-10-09"><svg class="icon"><use href="#i-calendar"/></svg>9 октября 2026</time><h3>Как подготовить авто к зиме</h3><p>Краткий список узлов и расходников, которые стоит проверить заранее.</p><a href="blog-article.html?slug=podgotovka-avto-k-zime" aria-label="Подобрать зимние расходники"><svg class="icon"><use href="#i-arrow"/></svg></a></div></article>
+        <article class="news-card"><img src="assets/news-suspension.webp" loading="lazy" alt="Амортизатор"><div><time datetime="2026-10-01"><svg class="icon"><use href="#i-calendar"/></svg>1 октября 2026</time><h3>Когда менять амортизаторы</h3><p>Распространённые признаки износа и рекомендации по диагностике.</p><a href="blog-article.html?slug=kogda-menyat-amortizatory" aria-label="Подобрать амортизаторы"><svg class="icon"><use href="#i-arrow"/></svg></a></div></article>
+        <article class="news-card"><img src="assets/cat-filters.webp" loading="lazy" alt="Автомобильные фильтры"><div><time datetime="2026-09-22"><svg class="icon"><use href="#i-calendar"/></svg>22 сентября 2026</time><h3>Зачем вовремя менять фильтры</h3><p>Воздушные, масляные и салонные фильтры: чем они отличаются.</p><a href="blog-article.html?slug=filtry-pri-tehobsluzhivanii" aria-label="Подобрать фильтры"><svg class="icon"><use href="#i-arrow"/></svg></a></div></article>
+        <article class="news-card"><img src="assets/cat-oils.webp" loading="lazy" alt="Моторные масла"><div><time datetime="2026-09-10"><svg class="icon"><use href="#i-calendar"/></svg>10 сентября 2026</time><h3>Выбираем моторное масло</h3><p>На что смотреть в рекомендациях производителя автомобиля.</p><a href="blog-article.html?slug=vybor-motornogo-masla" aria-label="Подобрать масло"><svg class="icon"><use href="#i-arrow"/></svg></a></div></article>
+      </div><div class="carousel-dots" id="newsDots" aria-label="Положение в карусели"></div>
+    </div></section>
+
+    <section class="section brand-section" aria-labelledby="brandsTitle"><div class="container"><div class="section-head"><h2 id="brandsTitle">Популярные бренды</h2></div><div class="brands-grid"><div>BOSCH</div><div>MANN<br>FILTER</div><div>KYB</div><div>TRW</div><div>CONTINENTAL</div><div>Valeo</div><div>NGK</div><div>MAHLE</div></div></div></section>
+
+    <section class="vin-section" id="vin" aria-labelledby="vinTitle"><div class="container vin-inner"><div class="vin-intro"><p class="eyebrow">НУЖНА ПОМОЩЬ?</p><h2 id="vinTitle">Подберём запчасти <span>по VIN-коду</span></h2><p>Поможем найти подходящие запчасти именно для вашего автомобиля.</p></div><div class="vin-box"><div class="vin-tabs" role="group" aria-label="Способ подбора"><button type="button" class="vin-tab active" data-mode="vin" aria-pressed="true">По VIN-коду</button><button type="button" class="vin-tab" data-mode="details" aria-pressed="false">По параметрам</button></div><form id="vinForm" novalidate><label class="sr-only" id="vinInputLabel" for="vinInput">VIN-код автомобиля</label><input id="vinInput" name="vin" maxlength="17" placeholder="Введите VIN-код вашего автомобиля" autocomplete="off"><button type="submit" class="btn btn-red">Получить консультацию <svg class="icon"><use href="#i-arrow"/></svg></button><p class="form-message" id="vinMessage" role="status" aria-live="polite"></p><small><svg class="icon"><use href="#i-lock"/></svg>Демонстрационная форма: отправку заявки подключите к Laravel</small></form></div><img class="vin-art" src="assets/vin-car.webp" alt="Красный автомобиль" loading="lazy"></div></section>
+  </main>
+
+  <footer class="site-footer" id="contacts"><div class="container"><div class="footer-grid">
+    <div class="footer-brand"><img src="assets/kingavto-logo.png" width="186" height="65" alt="KINGAVTO"><p>Автозапчасти оптом и в розницу.<br>Подбор и консультации для автовладельцев.</p><span class="socials"><a href="mailto:awgurweb@gmail.com" title="Написать на почту">@</a><a href="contacts.html" title="Контакты">☎</a></span></div>
+    <div><h3>Каталог</h3><a href="#categories">Запчасти</a><a href="#categories" data-select-category="tires">Шины</a><a href="#categories" data-select-category="wheels">Диски</a><a href="#categories" data-select-category="accessories">Автоаксессуары</a><a href="#categories" data-select-category="tools">Инструменты</a></div>
+    <div><h3>Покупателю</h3><a href="#vin">Подбор по VIN</a><a href="#about">О магазине</a><a href="blog.html">Блог и советы</a><a href="#products">Популярные товары</a></div>
+    <div><h3>Контакты</h3><a href="tel:+380673752355"><svg class="icon"><use href="#i-phone"/></svg>+38 (067) 375 23 55</a><a href="mailto:awgurweb@gmail.com"><svg class="icon"><use href="#i-mail"/></svg>awgurweb@gmail.com</a><span class="footer-contact"><svg class="icon"><use href="#i-pin"/></svg>г. Киев, ул. Кольцевая дорога, 15А</span><small>Пн–Пт 09:00–20:00</small></div>
+  </div><div class="footer-bottom"><span>© <span id="year"></span> KINGAVTO. Демонстрационный макет.</span><a href="#top">Наверх ↑</a></div></div></footer>
+
+  <div class="drawer-backdrop" id="drawerBackdrop" hidden></div>
+  <aside class="cart-drawer" id="cartDrawer" aria-label="Корзина" aria-modal="true" role="dialog" hidden><div class="drawer-head"><h2>Корзина</h2><button type="button" class="icon-button" id="closeDrawer" aria-label="Закрыть корзину"><svg class="icon"><use href="#i-close"/></svg></button></div><div class="drawer-items" id="drawerItems"></div><div class="drawer-bottom"><div class="drawer-total"><span>Сумма</span><b id="drawerTotal">0 грн</b></div><p>Это демонстрация интерфейса; оформление заказа ещё не подключено.</p><button type="button" class="btn btn-red" id="closeDrawerBottom">Продолжить покупки</button></div></aside>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>
