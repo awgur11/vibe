@@ -41,6 +41,21 @@ class Product extends Model
         });
     }
 
+    public function comments(): HasMany
+    {
+        return $this->hasMany(ProductComment::class);
+    }
+
+    public function comparisons(): HasMany
+    {
+        return $this->hasMany(Comparison::class);
+    }
+
+    public function favorites(): HasMany
+    {
+        return $this->hasMany(Favorite::class);
+    }
+
     public function pictures(): HasMany
     {
         return $this->hasMany(Picture::class)->orderBy('position')->orderBy('id');
@@ -56,7 +71,7 @@ class Product extends Model
 
         $available = $this->available;
 
-        if (!isset(self::AVAILABILITY[$available])) {
+        if (! isset(self::AVAILABILITY[$available])) {
             return new HtmlString('');
         }
 

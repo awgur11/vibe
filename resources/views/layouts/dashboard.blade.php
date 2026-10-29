@@ -61,6 +61,11 @@
                 <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="m12 3 3 6 7 1-5 5 1 7-6-3-6 3 1-7-5-5 7-1Z"/></svg>
                 {{ __('Бренды') }}
             </a>
+            <a href="{{ route('orders.index') }}" class="{{ request()->routeIs('orders.*') ? 'selected' : '' }}" @if(request()->routeIs('orders.*')) aria-current="page" @endif>
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V2h6v2M9 9h6M9 13h6M9 17h4"/></svg>
+                {{ __('Заказы') }}
+            </a>
+            <a href="{{ route('product-comments.index') }}" class="{{ request()->routeIs('product-comments.*') ? 'selected' : '' }}">{{ __('Отзывы о товарах') }}</a>
             <details class="settings-nav" @if(request()->routeIs('settings.*')) open @endif>
                 <summary>
                     <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/><circle cx="9" cy="6" r="2" fill="white"/><circle cx="15" cy="12" r="2" fill="white"/><circle cx="8" cy="18" r="2" fill="white"/></svg>

@@ -4,7 +4,6 @@
   'use strict';
   const $ = (selector, root = document) => root.querySelector(selector);
   const $$ = (selector, root = document) => [...(root ?? document).querySelectorAll(selector)];
-  const formatPrice = (price) => new Intl.NumberFormat('ru-RU').format(price) + ' грн';
 
   const getJSON = (key, fallback) => {
     try { return JSON.parse(localStorage.getItem(key)) ?? fallback; }
@@ -41,7 +40,8 @@
   mobileNav.addEventListener('click', e => { if (e.target.closest('a')) { closeMobile(); closeCatalog(); } });
 
   // Product listing, search, and filters
-  const cards = $$('.product-card');
+  const productsGrid = $('#productsGrid');
+  const cards = productsGrid ? $$('.product-card', productsGrid) : [];
   const filterBtns = $$('.filter-btn');
   const empty = $('#emptyProducts');
   let activeFilter = 'all';
@@ -49,7 +49,7 @@
   let expanded = true;
 
   function renderProducts() {
-    if (!empty || !$('#showAllProducts')) return;
+    if (!productsGrid) return;
     let count = 0;
     const matches = cards.filter(card => {
       const categories = (card.dataset.category || '').split(' ');
@@ -61,10 +61,12 @@
     cards.forEach(card => { card.hidden = true; });
     const visible = (activeFilter === 'all' && !searchTerm && !expanded) ? matches.slice(0,5) : matches;
     visible.forEach(card => { card.hidden = false; count++; });
-    empty.hidden = count > 0;
+    if (empty) empty.hidden = count > 0;
     const showAll = $('#showAllProducts');
-    showAll.textContent = expanded ? showAll.dataset.collapseLabel : showAll.dataset.expandLabel;
-    showAll.insertAdjacentHTML('beforeend', ' <svg class="icon"><use href="#i-arrow"/></svg>');
+    if (showAll) {
+      showAll.textContent = expanded ? showAll.dataset.collapseLabel : showAll.dataset.expandLabel;
+      showAll.insertAdjacentHTML('beforeend', ' <svg class="icon"><use href="#i-arrow"/></svg>');
+    }
     filterBtns.forEach(button => {
       const pressed = button.dataset.filter === activeFilter;
       button.classList.toggle('is-active',pressed);
@@ -110,10 +112,7 @@
     if (!searchTerm) { toast('Введите название или артикул для поиска');$('#siteSearch').focus(); }
   });
 
-  // Favorites + shopping cart (localStorage demo)
-  const favorites = new Set(getJSON('kingavto-favs', []));
-  const comparisons = new Set(getJSON('kingavto-compare', []));
-  const cart = getJSON('kingavto-cart', {});
+  // Favorites and comparisons
   const toastElement = $('#toast');
   let toastTimeout;
   function toast(message) {
@@ -123,100 +122,8 @@
     clearTimeout(toastTimeout);
     toastTimeout = setTimeout(() => toastElement.classList.remove('show'), 2600);
   }
-  function updateCounters() {
-    if ($('#favoritesCount')) $('#favoritesCount').textContent = favorites.size;
-    if ($('#compareCount')) $('#compareCount').textContent = comparisons.size;
-    $('#cartCount').textContent = Object.values(cart).reduce((sum,item) => sum + item.qty,0);
-    $$('.favorite-toggle').forEach(button => {
-      const active = favorites.has(button.dataset.favorite);
-      button.classList.toggle('is-active',active);
-      button.setAttribute('aria-label', active ? button.dataset.removeLabel : button.dataset.addLabel);
-      button.setAttribute('aria-pressed',String(active));
-    });
-    $$('.compare-toggle').forEach(button => {
-      const active = comparisons.has(button.dataset.compare);
-      button.classList.toggle('is-active', active);
-      button.setAttribute('aria-pressed', String(active));
-      button.setAttribute('aria-label', active ? button.dataset.removeLabel : button.dataset.addLabel);
-    });
-  }
-  updateCounters();
-  $$('.compare-toggle').forEach(button => button.addEventListener('click', () => {
-    const id = button.dataset.compare;
-    if (comparisons.has(id)) comparisons.delete(id);
-    else comparisons.add(id);
-    setJSON('kingavto-compare', [...comparisons]);
-    updateCounters();
-  }));
-  $$('.favorite-toggle').forEach(button => button.addEventListener('click', () => {
-    const id = button.dataset.favorite;
-    if (favorites.has(id)) favorites.delete(id);
-    else favorites.add(id);
-    setJSON('kingavto-favs',[...favorites]);
-    updateCounters();
-  }));
-  $$('.add-cart').forEach(button => button.addEventListener('click', () => {
-    const {id, name, price} = button.dataset;
-    if (!cart[id]) cart[id] = {id,name,price:Number(price),qty:0};
-    cart[id].qty += 1;
-    setJSON('kingavto-cart',cart);
-    updateCounters();
-    toast('Добавлено в корзину: ' + name);
-  }));
-
-  const drawer = $('#cartDrawer');
-  const backdrop = $('#drawerBackdrop');
-  let restoreFocus = null;
-  function openDrawer() {
-    restoreFocus = document.activeElement;
-    drawer.hidden=false;backdrop.hidden=false;
-    document.body.style.overflow='hidden';
-    renderDrawer();
-    $('#closeDrawer').focus();
-  }
-  function closeDrawer() {
-    drawer.hidden=true;backdrop.hidden=true;
-    document.body.style.overflow='';
-    restoreFocus?.focus?.();
-  }
-  function renderDrawer() {
-    const items = Object.values(cart);
-    const root = $('#drawerItems');
-    root.innerHTML = '';
-    if (!items.length) root.textContent='В корзине пока нет товаров.';
-    let total=0;
-    items.forEach(item => {
-      total += item.qty * item.price;
-      const row = document.createElement('div');
-      row.className='drawer-product';
-      const details = document.createElement('div');
-      const name = document.createElement('strong'); name.textContent=item.name;
-      const price = document.createElement('small');price.textContent = `${item.qty} × ${formatPrice(item.price)}`;
-      details.append(name,price);
-      const remove = document.createElement('button');
-      remove.type='button';remove.className='drawer-remove';remove.title='Удалить товар';remove.setAttribute('aria-label','Удалить '+item.name);
-      remove.innerHTML='<svg class="icon"><use href="#i-trash"/></svg>';
-      remove.addEventListener('click',()=> {delete cart[item.id];setJSON('kingavto-cart',cart);renderDrawer();updateCounters();});
-      row.append(details,remove);root.append(row);
-    });
-    $('#drawerTotal').textContent=formatPrice(total);
-  }
-  $('#cartButton').addEventListener('click',openDrawer);
-  $('#closeDrawer')?.addEventListener('click',closeDrawer);
-  $('#closeDrawerBottom')?.addEventListener('click',closeDrawer);
-  backdrop?.addEventListener('click',closeDrawer);
-  $('#favoritesButton').addEventListener('click', () => {
-    activeFilter='all';searchTerm='';expanded=true;renderProducts();
-    let seen=0;
-    cards.forEach(card => {card.hidden = !favorites.has(card.dataset.id); if (!card.hidden) seen++;});
-    empty.hidden=seen>0;
-    if (!seen) empty.textContent='Список избранного пуст. Добавьте товары с помощью значка сердечка.';
-    else empty.textContent='По вашему запросу товары не найдены. Попробуйте другой запрос или раздел.';
-    $('#products').scrollIntoView({behavior:'smooth'});
-  });
-  $('#compareButton').addEventListener('click',()=>toast('Сравнение товаров подключается к каталогу в Laravel'));
   document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') { closeCatalog();closeMobile();if (drawer && !drawer.hidden) closeDrawer(); }
+    if (e.key === 'Escape') { closeCatalog();closeMobile(); }
   });
 
   // News carousel: native horizontal scroll and accessible buttons
@@ -317,4 +224,68 @@
       if (status) status.textContent = button.dataset.errorLabel;
     }
   });
+})();
+
+
+(() => {
+  'use strict';
+  const form = document.querySelector('[data-catalog-filters]');
+  if (!form) return;
+  form.addEventListener('change', event => {
+    if (event.target.matches('input[type="checkbox"]')) form.requestSubmit();
+  });
+  document.querySelector('[data-catalog-sort]')?.addEventListener('change', () => form.requestSubmit());
+})();
+
+
+(() => {
+  'use strict';
+  const panel = document.getElementById('catalog-filter-panel');
+  const toggle = document.querySelector('[data-catalog-filter-toggle]');
+  const closeButton = document.querySelector('[data-catalog-filter-close]');
+  const backdrop = document.querySelector('[data-catalog-filter-backdrop]');
+  if (!panel || !toggle || !closeButton || !backdrop) return;
+  const mobile = window.matchMedia('(max-width:680px)');
+  let isOpen = false;
+  let previousOverflow = '';
+  function closeFilters(restoreFocus = true) {
+    if (isOpen) document.body.style.overflow = previousOverflow;
+    isOpen = false;
+    panel.classList.remove('is-open');
+    panel.removeAttribute('role');
+    panel.removeAttribute('aria-modal');
+    panel.inert = mobile.matches;
+    backdrop.hidden = true;
+    toggle.setAttribute('aria-expanded', 'false');
+    if (restoreFocus && mobile.matches) toggle.focus();
+  }
+  toggle.addEventListener('click', () => {
+    if (!mobile.matches) return;
+    if (isOpen) { closeFilters(); return; }
+    previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    isOpen = true;
+    panel.inert = false;
+    panel.classList.add('is-open');
+    panel.setAttribute('role', 'dialog');
+    panel.setAttribute('aria-modal', 'true');
+    backdrop.hidden = false;
+    toggle.setAttribute('aria-expanded', 'true');
+    closeButton.focus();
+  });
+  closeButton.addEventListener('click', () => closeFilters());
+  backdrop.addEventListener('click', () => closeFilters());
+  document.addEventListener('keydown', event => {
+    if (!isOpen) return;
+    if (event.key === 'Escape') { event.preventDefault(); closeFilters(); }
+    if (event.key === 'Tab') {
+      const controls = [...panel.querySelectorAll('button, summary, input:not([disabled]), a[href], select')].filter(element => element.getClientRects().length > 0);
+      const first = controls[0];
+      const last = controls[controls.length - 1];
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
+      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
+    }
+  });
+  mobile.addEventListener('change', () => closeFilters(false));
+  closeFilters(false);
 })();

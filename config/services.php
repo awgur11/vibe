@@ -14,6 +14,10 @@ return [
     |
     */
 
+    'nova_poshta' => [
+        'key' => env('Nova_Poshta'),
+    ],
+
     'postmark' => [
         'key' => env('POSTMARK_API_KEY'),
     ],

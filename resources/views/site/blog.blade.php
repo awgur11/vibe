@@ -15,7 +15,7 @@
                         @if($page->short_content)
                             <div class="blog-lead">{!! $page->short_content !!}</div>
                         @else
-                            <p class="blog-lead">{{ __('Советы по обслуживанию, выбору запчастей и уходу за автомобилем.') }}</p>
+                            <p class="blog-lead">{{ setting('blog_page_short_text') }}</p>
                         @endif
                         <a href="#articles" class="btn btn-red">{{ __('Читать статьи') }} <svg class="icon" aria-hidden="true"><use href="#i-arrow"/></svg></a>
                         <div class="blog-hero-facts"><span><svg class="icon" aria-hidden="true"><use href="#i-gear"/></svg>{{ __('Практичные советы') }}</span><span><svg class="icon" aria-hidden="true"><use href="#i-shield"/></svg>{{ __('Подбор без ошибок') }}</span></div>

@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Catalog;
 use App\Models\Page;
+use App\Models\Product;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -48,6 +49,19 @@ class SiteTest extends TestCase
         foreach ([$hidden, $ordinary, $withoutPhoto, $catalogs->last()] as $catalog) {
             $response->assertDontSee(route('catalog', ['catalogSlag' => $catalog->slag]), false);
         }
+    }
+
+    public function test_popular_products_have_matching_catalog_filters_and_only_show_published_in_stock_products(): void
+    {
+        $catalog = Catalog::factory()->create(['slag' => 'test-catalog']);
+        $product = Product::factory()->for($catalog)->create(['public' => true, 'popular' => true, 'available' => 0]);
+        Product::factory()->for($catalog)->create(['public' => false, 'popular' => true, 'available' => 0]);
+        Product::factory()->for($catalog)->create(['public' => true, 'popular' => true, 'available' => 1]);
+        Product::factory()->for($catalog)->create(['public' => true, 'popular' => false, 'available' => 0]);
+        $this->get(route('index'))->assertOk()
+            ->assertViewHas('products', fn ($products): bool => $products->modelKeys() === [$product->id])
+            ->assertSee('data-filter="test-catalog"', false)->assertSee('data-category="test-catalog"', false)
+            ->assertSee('id="emptyProducts" hidden', false);
     }
 
     public function test_catalog_links_open_published_catalogs_and_their_published_children(): void

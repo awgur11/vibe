@@ -1,22 +1,31 @@
 <?php
 
+use App\Http\Controllers\AdminOrderController;
 use App\Http\Controllers\AdvController;
 use App\Http\Controllers\ArticleController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BrandController;
+use App\Http\Controllers\CartController;
 use App\Http\Controllers\CatalogController;
+use App\Http\Controllers\ComparisonController;
 use App\Http\Controllers\EditorImageController;
+use App\Http\Controllers\FavoriteController;
 use App\Http\Controllers\FilterController;
 use App\Http\Controllers\FvalueController;
 use App\Http\Controllers\LanguageController;
+use App\Http\Controllers\NovaPoshtaController;
+use App\Http\Controllers\OrderController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\PictureController;
+use App\Http\Controllers\ProductCommentController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ReorderController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\SiteController;
+use App\Http\Controllers\SiteProductController;
 use App\Http\Controllers\SlideController;
 use App\Http\Controllers\TranslationController;
+use App\Http\Middleware\EnsureCartClient;
 use App\Services\SiteSetLocale;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -55,6 +64,9 @@ Route::middleware(['auth', 'auth.session'])->group(function (): void {
         Route::resource('/slides', SlideController::class)->except('show');
 
         Route::resource('/advs', AdvController::class)->only(['index', 'store', 'update', 'destroy']);
+        Route::resource('/product-comments', ProductCommentController::class)->only(['index', 'update', 'destroy']);
+        Route::resource('/orders', AdminOrderController::class)->only(['index', 'show', 'update']);
+
         Route::resource('/brands', BrandController::class)->only(['index', 'store', 'update', 'destroy']);
 
         Route::patch('/catalogs/{catalog}/publication', [CatalogController::class, 'updatePublication'])->name('catalogs.publication.update');
@@ -93,7 +105,34 @@ Route::middleware(['auth', 'auth.session'])->group(function (): void {
 
 (new SiteSetLocale)->handle();
 
-Route::group(['prefix' => config('app.url_prefix'), 'middleware' => ['redirect.base.locale']], function () {
+Route::group(['prefix' => config('app.url_prefix'), 'middleware' => ['redirect.base.locale', EnsureCartClient::class]], function () {
+    Route::prefix('cart')->name('cart.')->group(function (): void {
+        Route::get('/', [CartController::class, 'index'])->name('index');
+        Route::get('/products/{product}', [CartController::class, 'product'])->name('product');
+        Route::post('/', [CartController::class, 'store'])->name('store');
+        Route::patch('/{cart}', [CartController::class, 'update'])->name('update');
+        Route::delete('/{cart}', [CartController::class, 'destroy'])->name('destroy');
+    });
+
+    Route::prefix('delivery/nova-poshta')->name('delivery.nova_poshta.')->middleware('throttle:60,1')->group(function (): void {
+        Route::get('/cities', [NovaPoshtaController::class, 'cities'])->name('cities');
+        Route::get('/warehouses', [NovaPoshtaController::class, 'warehouses'])->name('warehouses');
+    });
+
+    Route::get('/product/{product:slag}', [SiteProductController::class, 'show'])->name('product');
+    Route::post('/product/{product:slag}/comments', [SiteProductController::class, 'comment'])->middleware('throttle:5,10')->name('product.comments.store');
+    Route::get('/comparison/state', [ComparisonController::class, 'state'])->name('comparison.state');
+    Route::get('/comparison/{catalog}', [ComparisonController::class, 'show'])->name('comparison.show');
+    Route::post('/comparison/products/{product}', [ComparisonController::class, 'store'])->name('comparison.store');
+    Route::delete('/comparison/products/{product}', [ComparisonController::class, 'destroy'])->name('comparison.destroy');
+    Route::get('/favorites', [FavoriteController::class, 'index'])->name('favorites.index');
+    Route::get('/favorites/state', [FavoriteController::class, 'state'])->name('favorites.state');
+    Route::post('/favorites/{product}', [FavoriteController::class, 'store'])->name('favorites.store');
+    Route::delete('/favorites/{product}', [FavoriteController::class, 'destroy'])->name('favorites.destroy');
+    Route::get('/order', [OrderController::class, 'checkout'])->name('order.checkout');
+    Route::get('/order/csrf-token', [OrderController::class, 'csrfToken'])->name('order.csrf-token');
+    Route::post('/order', [OrderController::class, 'store'])->name('order.store');
+
     Route::get('/', [SiteController::class, 'index'])->name('index');
     Route::get('/catalog/{catalogSlag}', [SiteController::class, 'catalog'])->name('catalog');
     Route::get('/{blogSlag}/{articleSlag}', [SiteController::class, 'article'])->name('article');

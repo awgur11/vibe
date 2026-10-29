@@ -35,8 +35,8 @@
           <button type="submit" aria-label="{{ __('Найти') }}"><svg class="icon"><use href="#i-search"/></svg></button>
         </form>
         <div class="header-actions">
-          <button class="header-action" id="favoritesButton" type="button" title="{{ __('Избранное') }}"><span class="action-icon"><svg class="icon"><use href="#i-heart"/></svg><span class="counter" id="favoritesCount">0</span></span><span>{{ __('Избранное') }}</span></button>
-          <button class="header-action" id="compareButton" type="button" title="{{ __('Сравнение') }}"><span class="action-icon"><svg class="icon"><use href="#i-chart"/></svg><span class="counter" id="compareCount">0</span></span><span>{{ __('Сравнение') }}</span></button>
+          <a class="header-action" id="favoritesButton" href="{{ route('favorites.index') }}" title="{{ __('Избранное') }}"><span class="action-icon"><svg class="icon"><use href="#i-heart"/></svg><span class="counter" id="favoritesCount">0</span></span><span>{{ __('Избранное') }}</span></a>
+          <button class="header-action" id="compareButton" type="button" aria-haspopup="dialog" aria-controls="comparisonDialog" title="{{ __('Сравнение') }}"><span class="action-icon"><svg class="icon"><use href="#i-chart"/></svg><span class="counter" id="compareCount">0</span></span><span>{{ __('Сравнение') }}</span></button>
           <button class="header-action" id="cartButton" type="button" title="{{ __('Корзина') }}"><span class="action-icon"><svg class="icon"><use href="#i-cart"/></svg><span class="counter" id="cartCount">0</span></span><span>{{ __('Корзина') }}</span></button>
         </div>
         <a class="header-phone" href="tel:+380671234567"><svg class="icon"><use href="#i-phone"/></svg><span><b>{{ setting('phones')[0] ?? '+38000 000 0000'}}</b><small>{!! nl2br(e(setting('working_hours'))) !!}</small></span></a>
@@ -50,7 +50,7 @@
     @foreach($menuPages as $mp)
         <a href="{{ route('page', ['slag' => $mp->slag]) }}">{{ $mp->menu }}</a>
     @endforeach
-
+        @include('site.details.base.languages')
       </div>
     </nav>
   </header>

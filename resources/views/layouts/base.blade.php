@@ -5,11 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#111215">
   <meta name="description" content="KINGAVTO — демонстрационный макет интернет-магазина автозапчастей: категории, товары, подбор и новости.">
-  <title>KINGAVTO — автозапчасти оптом и в розницу</title>
+  <title>@yield('title', 'KINGAVTO — автозапчасти оптом и в розницу')</title>
   <link rel="preload" href="assets/hero-car.webp" as="image" fetchpriority="high">
   <link rel="stylesheet" href="{{ asset('styles.css') }}?v={{ filemtime(public_path('styles.css')) }}">
   <script src="{{ asset('catalogs-menu.js') }}?v={{ filemtime(public_path('catalogs-menu.js')) }}" defer></script>
   <script src="{{ asset('script.js') }}?v={{ filemtime(public_path('script.js')) }}" defer></script>
+  <script src="{{ asset('cart.js') }}?v={{ filemtime(public_path('cart.js')) }}" defer></script>
+  <script src="{{ asset('comparison.js') }}?v={{ filemtime(public_path('comparison.js')) }}" defer></script>
+  <script src="{{ asset('favorites.js') }}?v={{ filemtime(public_path('favorites.js')) }}" defer></script>
+  <script src="{{ asset('product.js') }}?v={{ filemtime(public_path('product.js')) }}" defer></script>
+  <script src="{{ asset('order.js') }}?v={{ filemtime(public_path('order.js')) }}" defer></script>
 </head>
 <body>
   <!-- Локальные SVG-иконки без внешних библиотек -->
@@ -35,6 +40,7 @@
     <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 1 1 8 0v3"/></symbol>
     <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 2v6M17 2v6M3 10h18"/></symbol>
     <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18M8 6V3h8v3M6 6l1 15h10l1-15M10 10v7M14 10v7"/></symbol>
+    <symbol id="i-no-image" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8" cy="8" r="1.5"/><path d="m3 16 5-5 4 4 3-3 6 6M2 2l20 20"/></symbol>
     <symbol id="i-check" viewBox="0 0 24 24"><path d="m4 12 5 5L20 6"/></symbol>
   </svg>   
 
@@ -45,5 +51,9 @@
     @yield('content')
 
     @include('site.details.base.footer')
+
+    @include('site.details.base.cart-modal')
+<div data-favorites-ui data-state-url="{{ route('favorites.state') }}" data-error="{{ __('Не удалось обновить избранное. Попробуйте ещё раз.') }}" hidden></div>
+@include('site.details.base.comparison-modal')
 </body>
 </html>
