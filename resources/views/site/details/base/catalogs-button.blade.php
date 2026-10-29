@@ -1,12 +1,12 @@
-<button type="button" class="catalog-toggle btn btn-red" id="catalogToggle" aria-expanded="false" aria-controls="catalogDropdown">
+<a href="{{ route('catalogs') }}" class="catalog-toggle btn btn-red" id="catalogToggle" aria-expanded="false" aria-controls="catalogDropdown">
     <svg class="icon"><use href="#i-menu"/></svg>{{ __('Каталог') }}
-</button>
+</a>
 <div class="catalog-dropdown catalog-mega" id="catalogDropdown" hidden>
     <div class="catalog-mega-inner">
     <div class="catalog-roots">
         @foreach($menuCatalogs->get('', collect()) as $rootCatalog)
             <a class="catalog-menu-row" href="{{ route('catalog', ['catalogSlag' => $rootCatalog->slag]) }}" data-catalog-root="{{ $rootCatalog->id }}">
-                <svg class="icon"><use href="#i-box"/></svg>
+                <span class="{{ $rootCatalog->icon ?: 'catalog-icon catalog-icon-box' }}" aria-hidden="true"></span>
                 <span>{{ $rootCatalog->title ?: $rootCatalog->slag }}</span>
                 @if($menuCatalogs->has($rootCatalog->id))
                     <svg class="icon catalog-chevron"><use href="#i-chevron"/></svg>

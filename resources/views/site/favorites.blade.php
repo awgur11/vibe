@@ -2,7 +2,7 @@
 @section('content')
 <main class="section" data-favorites-page>
     <div class="container">
-        <nav class="blog-crumbs" aria-label="{{ __('Хлебные крошки') }}"><a href="{{ route('index') }}">{{ __('Главная') }}</a><span>/</span><span>{{ __('Избранное') }}</span></nav>
+        @include('site.details.base.crumbs')
         <div class="section-head"><h1>{{ __('Избранное') }}</h1></div>
         @if($products->isEmpty())
             <p>{{ __('В избранном пока нет товаров.') }}</p>

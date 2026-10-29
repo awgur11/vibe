@@ -29,28 +29,43 @@
     <div class="header-main">
       <div class="container header-main-inner">
         <a href="#top" class="brand" aria-label="{{ __('KINGAVTO — на главную') }}"><img src="{{ asset('storage/'.setting('site_logo')) }}" width="216" height="76" alt="KINGAVTO"></a>
-        <form class="header-search" id="headerSearch" role="search">
-          <svg class="icon"><use href="#i-search"/></svg>
-          <input id="siteSearch" type="search" placeholder="{{ __('Поиск запчастей по названию или артикулу') }}" aria-label="{{ __('Поиск товаров') }}" autocomplete="off">
-          <button type="submit" aria-label="{{ __('Найти') }}"><svg class="icon"><use href="#i-search"/></svg></button>
-        </form>
+        @include('site.details.header.search-form')
         <div class="header-actions">
           <a class="header-action" id="favoritesButton" href="{{ route('favorites.index') }}" title="{{ __('Избранное') }}"><span class="action-icon"><svg class="icon"><use href="#i-heart"/></svg><span class="counter" id="favoritesCount">0</span></span><span>{{ __('Избранное') }}</span></a>
           <button class="header-action" id="compareButton" type="button" aria-haspopup="dialog" aria-controls="comparisonDialog" title="{{ __('Сравнение') }}"><span class="action-icon"><svg class="icon"><use href="#i-chart"/></svg><span class="counter" id="compareCount">0</span></span><span>{{ __('Сравнение') }}</span></button>
           <button class="header-action" id="cartButton" type="button" title="{{ __('Корзина') }}"><span class="action-icon"><svg class="icon"><use href="#i-cart"/></svg><span class="counter" id="cartCount">0</span></span><span>{{ __('Корзина') }}</span></button>
         </div>
         <a class="header-phone" href="tel:+380671234567"><svg class="icon"><use href="#i-phone"/></svg><span><b>{{ setting('phones')[0] ?? '+38000 000 0000'}}</b><small>{!! nl2br(e(setting('working_hours'))) !!}</small></span></a>
+        <div class="header-auth-slot" data-auth-desktop-slot><div class="header-auth-control" data-auth-control>
+        @guest
+        <button type="button" class="header-auth-button" data-auth-open aria-haspopup="dialog" aria-controls="authRegDialog" aria-label="{{ __('Войти') }}" title="{{ __('Войти') }}"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 22v-2a8 8 0 0 1 16 0v2"/></svg></button>
+        @else
+        <div class="header-account" data-account-menu>
+            <button type="button" class="header-auth-button" data-account-toggle aria-expanded="false" aria-controls="accountDropdown" aria-label="{{ __('Аккаунт') }}" title="{{ auth()->user()->name }}"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 22v-2a8 8 0 0 1 16 0v2"/></svg></button>
+            <div class="header-account-dropdown" id="accountDropdown" hidden>
+                <strong class="header-account-name">{{ auth()->user()->name }}</strong>
+                @if(!auth()->user()->hasVerifiedEmail())<a class="account-verify" href="{{ route('verification.notice') }}">{{ __('Подтвердить почту') }}</a>@endif
+                <a href="{{ route('account.profile') }}">{{ __('Мой профиль') }}</a>
+                <a href="{{ route('account.orders') }}">{{ __('Мои заказы') }}</a>
+                <form action="{{ route('logout') }}" method="POST">@csrf<button type="submit">{{ __('Выйти') }}</button></form>
+            </div>
+        </div>
+        @endguest
+        </div></div>
         <button id="mobileNavToggle" class="mobile-nav-toggle" aria-expanded="false" aria-controls="mainNav" aria-label="{{ __('Открыть меню') }}"><svg class="icon"><use href="#i-menu"/></svg></button>
       </div>
     </div>
     <nav class="header-nav" id="mainNav" aria-label="{{ __('Главное меню') }}">
       <div class="container nav-inner">
         @include('site.details.base.catalogs-button')
-        <a class="nav-active" href="{{ route('index') }}">@lang('Главная')</a>
+        <a class="{{ url()->current() == route('index') ? 'nav-active' : '' }}" href="{{ route('index') }}">@lang('Главная')</a>
     @foreach($menuPages as $mp)
-        <a href="{{ route('page', ['slag' => $mp->slag]) }}">{{ $mp->menu }}</a>
+        <a class="{{ url()->current() == route('page', ['slag' => $mp->slag]) ? 'nav-active' : '' }}" href="{{ route('page', ['slag' => $mp->slag]) }}">{{ $mp->menu }}</a>
     @endforeach
-        @include('site.details.base.languages')
+        <div class="nav-account-languages">
+            <div class="mobile-auth-slot" data-auth-mobile-slot></div>
+            @include('site.details.base.languages')
+        </div>
       </div>
     </nav>
   </header>

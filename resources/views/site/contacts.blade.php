@@ -19,7 +19,7 @@
   <main id="mainContent" class="contacts-page">
     <section class="contacts-hero" aria-labelledby="contactsTitle">
       <div class="container">
-        <nav class="breadcrumbs" aria-label="{{ __('Хлебные крошки') }}"><a href="{{ route('index') }}">{{ __('Главная') }}</a><span aria-hidden="true">/</span><span>{{ __('Контакты') }}</span></nav>
+        @include('site.details.base.crumbs')
         <div class="contact-intro">
           <div class="contact-intro-copy">
             <p class="eyebrow">KINGAVTO · {{ __('НА СВЯЗИ') }}</p>

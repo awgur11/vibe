@@ -5,7 +5,7 @@
 @section('content')
     <main class="article-page" id="mainContent">
         <div class="container">
-            <nav class="blog-crumbs" aria-label="{{ __('Хлебные крошки') }}"><a href="{{ route('index') }}">{{ __('Главная') }}</a><span aria-hidden="true">/</span><a href="{{ route('page', $blog->slag) }}">{{ $blog->title ?: __('Блог') }}</a><span aria-hidden="true">/</span><span>{{ $page->title ?: $page->slag }}</span></nav>
+            @include('site.details.base.crumbs')
             <div class="article-layout">
                 <article class="article-main">
                     <header class="article-heading">

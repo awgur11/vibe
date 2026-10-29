@@ -15,6 +15,7 @@
         .note-modal .note-modal-footer{display:flex;justify-content:flex-end;align-items:center;flex-wrap:wrap;gap:8px;height:auto;min-height:60px;padding:12px 20px}.note-modal .note-modal-footer .note-btn{float:none;max-width:100%;white-space:normal}
         .settings-nav summary{display:flex;align-items:center;gap:12px;padding:12px;border-radius:10px;color:#555565;cursor:pointer;list-style:none}.settings-nav summary::-webkit-details-marker{display:none}.settings-nav summary:hover,.settings-nav[open] summary{background:#eeeafd;color:#5142c1}.settings-nav>a{margin:6px 0 0 34px}.settings-nav-arrow{margin-left:auto;transition:transform .15s}.settings-nav[open] .settings-nav-arrow{transform:rotate(180deg)}
     </style>
+@stack('styles')
 </head>
 <body>
 <div class="shell">

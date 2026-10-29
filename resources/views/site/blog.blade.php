@@ -7,7 +7,7 @@
     <main class="blog-page" id="mainContent">
         <section class="blog-hero" aria-labelledby="blogTitle">
             <div class="container">
-                <nav class="blog-crumbs" aria-label="{{ __('Хлебные крошки') }}"><a href="{{ route('index') }}">{{ __('Главная') }}</a><span aria-hidden="true">/</span><span>{{ $page->title ?: __('Блог') }}</span></nav>
+                @include('site.details.base.crumbs')
                 <div class="blog-hero-layout">
                     <div class="blog-hero-copy">
                         <p class="eyebrow">{{ config('app.name') }} / {{ __('ПОЛЕЗНЫЕ МАТЕРИАЛЫ') }}</p>

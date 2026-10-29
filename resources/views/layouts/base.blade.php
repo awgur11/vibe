@@ -1,11 +1,10 @@
 <!doctype html>
-<html lang="ru">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#111215">
-  <meta name="description" content="KINGAVTO — демонстрационный макет интернет-магазина автозапчастей: категории, товары, подбор и новости.">
-  <title>@yield('title', 'KINGAVTO — автозапчасти оптом и в розницу')</title>
+  {!! $site_seo ?? null !!}
   <link rel="preload" href="assets/hero-car.webp" as="image" fetchpriority="high">
   <link rel="stylesheet" href="{{ asset('styles.css') }}?v={{ filemtime(public_path('styles.css')) }}">
   <script src="{{ asset('catalogs-menu.js') }}?v={{ filemtime(public_path('catalogs-menu.js')) }}" defer></script>
@@ -14,6 +13,9 @@
   <script src="{{ asset('comparison.js') }}?v={{ filemtime(public_path('comparison.js')) }}" defer></script>
   <script src="{{ asset('favorites.js') }}?v={{ filemtime(public_path('favorites.js')) }}" defer></script>
   <script src="{{ asset('product.js') }}?v={{ filemtime(public_path('product.js')) }}" defer></script>
+  <script src="{{ asset('auth-modal.js') }}?v={{ filemtime(public_path('auth-modal.js')) }}" defer></script>
+  <script src="{{ asset('search.js') }}?v={{ filemtime(public_path('search.js')) }}" defer></script>
+  <script src="{{ asset('callback.js') }}?v={{ filemtime(public_path('callback.js')) }}" defer></script>
   <script src="{{ asset('order.js') }}?v={{ filemtime(public_path('order.js')) }}" defer></script>
 </head>
 <body>
@@ -48,6 +50,7 @@
 
     @include('site.details.base.adminzone-link')
 
+    @if(session('email_verified'))<div class="container"><p class="product-review-status" role="status">{{ session('email_verified') }}</p></div>@endif
     @yield('content')
 
     @include('site.details.base.footer')
@@ -55,5 +58,7 @@
     @include('site.details.base.cart-modal')
 <div data-favorites-ui data-state-url="{{ route('favorites.state') }}" data-error="{{ __('Не удалось обновить избранное. Попробуйте ещё раз.') }}" hidden></div>
 @include('site.details.base.comparison-modal')
+@include('site.details.base.auth-reg-modal')
+@include('site.details.base.me-call-back-modal')
 </body>
 </html>

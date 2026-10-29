@@ -59,16 +59,24 @@ class SiteController extends Controller
         return view('site.index', $this->data);
     }
 
+    public function catalogs(): View
+    {
+        $this->data['catalogs'] = Catalog::whereNull('parent_id')->where('public', true)->with([
+            'translation',
+            'children' => fn (HasMany $query) => $query->where('public', true)->with('translation')->orderBy('position')->orderBy('id'),
+        ])->orderBy('position')->orderBy('id')->get();
+        $this->data['crumbs'] = $this->breadcrumbService->forTitle(__('Каталог'));
+
+        return view('site.catalogs', $this->data);
+    }
+
     public function catalog(Request $request): View
     {
         $catalog = Catalog::with('translation')->where('public', true)->where('slag', $request->route('catalogSlag'))->firstOrFail();
         $this->data['catalog'] = $catalog;
         $this->data['catalogs'] = $catalog->children()->with('translation')->where('public', true)
             ->orderBy('position')->orderBy('id')->get();
-        $this->data['crumbs'] = [
-            ['title' => __('Головна'), 'url' => route('index')],
-            ['title' => $catalog->title ?: $catalog->slag, 'url' => null],
-        ];
+        $this->data['crumbs'] = $this->breadcrumbService->forCatalog($catalog);
 
         if ($this->data['catalogs']->isEmpty()) {
             $allowedValueIds = $catalog->fvalues()

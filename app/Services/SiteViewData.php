@@ -8,12 +8,13 @@ use Illuminate\Database\Eloquent\Collection;
 
 class SiteViewData
 {
-    public function __construct(private LanguageSwitcherService $languageSwitcherService) {}
+    public function __construct(private LanguageSwitcherService $languageSwitcherService, private BreadcrumbService $breadcrumbService) {}
 
-    /** @return array{menuPages: Collection, languageButtons: list<array{locale: string, title: string, short: string, url: string, active: bool}>, menuCatalogs: Collection} */
+    /** @return array{menuPages: Collection, languageButtons: list<array{locale: string, title: string, short: string, url: string, active: bool}>, menuCatalogs: Collection, crumbs: list<array{title: string, url: ?string}>} */
     public function get(): array
     {
         return [
+            'crumbs' => $this->breadcrumbService->forRequest(),
             'menuPages' => Page::with('translation')->whereType('pages')->where('public', true)->where('is_menu', true)
                 ->whereNotNull('slag')->where('slag', '!=', '')
                 ->orderBy('position')->orderBy('id')->get(),

@@ -6,7 +6,7 @@
     @php($deliveryMethod = old('delivery_method', 'nova_poshta'))
     <main class="checkout-page" id="mainContent">
         <div class="container">
-            <nav class="blog-crumbs" aria-label="{{ __('Хлебные крошки') }}"><a href="{{ route('index') }}">{{ __('Главная') }}</a><span aria-hidden="true">/</span><span>{{ __('Оформление заказа') }}</span></nav>
+            @include('site.details.base.crumbs')
             <div class="checkout-heading"><p class="eyebrow">{{ config('app.name') }}</p><h1>{{ __('Оформление заказа') }}</h1></div>
             @if(session('placed_order'))
                 <section class="checkout-message checkout-success" role="status">

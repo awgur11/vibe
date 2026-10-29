@@ -27,6 +27,7 @@ class SaveCatalogRequest extends FormRequest
             'fvalues.*' => ['integer', 'distinct', 'exists:fvalues,id'],
             'filters' => ['sometimes', 'array'],
             'filters.*' => ['integer', 'distinct', 'exists:filters,id'],
+            'icon' => ['sometimes', 'nullable', 'string', 'max:100', 'regex:/^[a-zA-Z0-9 _-]+$/D'],
             'parent_id' => ['nullable', 'integer', 'exists:catalogs,id'],
             'slag' => ['nullable', 'string', 'max:255', 'regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/D', Rule::unique('catalogs', 'slag')->ignore($this->route('catalog'))],
             'public' => ['required', 'boolean'],

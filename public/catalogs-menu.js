@@ -34,7 +34,9 @@
       }
     });
   });
-  toggle.addEventListener('click', () => {
+  toggle.addEventListener('click', event => {
+    if (window.matchMedia('(max-width: 680px)').matches) return;
+    event.preventDefault();
     dropdown.hidden = !dropdown.hidden;
     toggle.setAttribute('aria-expanded', String(!dropdown.hidden));
     if (!dropdown.hidden && !$('.catalog-roots .is-active', dropdown)) {

@@ -1,5 +1,6 @@
-<nav class="pt-4" aria-label="{{ __('Хлібні крихти') }}">
-    <ol class="breadcrumb mb-0">
+@if(!empty($crumbs))
+<nav class="site-crumbs" aria-label="{{ __('Хлебные крошки') }}">
+    <ol class="breadcrumb">
         @foreach($crumbs as $crumb)
             @if($crumb['url'] !== null)
                 <li class="breadcrumb-item"><a href="{{ $crumb['url'] }}">{{ $crumb['title'] }}</a></li>
@@ -9,3 +10,4 @@
         @endforeach
     </ol>
 </nav>
+@endif

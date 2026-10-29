@@ -2,7 +2,7 @@
 @section('content')
 <main class="section" data-comparison-page>
     <div class="container">
-        <nav class="blog-crumbs" aria-label="{{ __('Хлебные крошки') }}"><a href="{{ route('index') }}">{{ __('Главная') }}</a><span>/</span><span>{{ __('Сравнение') }}</span></nav>
+        @include('site.details.base.crumbs')
         <div class="section-head"><h1>{{ __('Сравнение товаров') }}: {{ $catalog->title ?: $catalog->slag }}</h1></div>
         @if($products->isEmpty())
             <p>{{ __('В этой категории пока нет товаров для сравнения.') }}</p>

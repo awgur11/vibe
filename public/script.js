@@ -37,7 +37,10 @@
     const isOpen = mobileNav.classList.toggle('is-open');
     mobileToggle.setAttribute('aria-expanded',String(isOpen));
   });
-  mobileNav.addEventListener('click', e => { if (e.target.closest('a')) { closeMobile(); closeCatalog(); } });
+  mobileNav.addEventListener('click', e => {
+    if (e.defaultPrevented) return;
+    if (e.target.closest('a')) { closeMobile(); closeCatalog(); }
+  });
 
   // Product listing, search, and filters
   const productsGrid = $('#productsGrid');
@@ -101,17 +104,6 @@
       }
     }
   });
-  $('#siteSearch').addEventListener('input', e => {
-    searchTerm = e.target.value.trim().toLocaleLowerCase('ru');
-    activeFilter='all';expanded=true;
-    renderProducts();
-  });
-  $('#headerSearch').addEventListener('submit', e => {
-    e.preventDefault();
-    $('#products').scrollIntoView({behavior:'smooth'});
-    if (!searchTerm) { toast('Введите название или артикул для поиска');$('#siteSearch').focus(); }
-  });
-
   // Favorites and comparisons
   const toastElement = $('#toast');
   let toastTimeout;

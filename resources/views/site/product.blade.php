@@ -3,7 +3,7 @@
 @section('content')
 <main class="product-page section">
 <div class="container">
-    <nav class="blog-crumbs" aria-label="{{ __('Хлебные крошки') }}"><a href="{{ route('index') }}">{{ __('Главная') }}</a>@if($product->catalog?->public)<span>/</span><a href="{{ route('catalog', ['catalogSlag' => $product->catalog->slag]) }}">{{ $product->catalog->title ?: $product->catalog->slag }}</a>@endif<span>/</span><span>{{ $product->title ?: $product->slag }}</span></nav>
+    @include('site.details.base.crumbs')
     <div class="product-detail-layout">
         <section class="product-gallery" aria-label="{{ __('Фотографии товара') }}" data-product-gallery>
             <div class="product-gallery-actions">

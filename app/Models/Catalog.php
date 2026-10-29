@@ -17,7 +17,7 @@ class Catalog extends Model
     /** @use HasFactory<CatalogFactory> */
     use HasFactory;
 
-    protected $fillable = ['parent_id', 'position', 'preview', 'slag', 'public', 'popular'];
+    protected $fillable = ['icon', 'parent_id', 'position', 'preview', 'slag', 'public', 'popular'];
 
     protected function casts(): array
     {

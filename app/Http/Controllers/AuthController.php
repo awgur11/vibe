@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Auth\Events\Registered;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -16,7 +17,7 @@ use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
-    public function register(Request $request): RedirectResponse
+    public function register(Request $request): RedirectResponse|JsonResponse
     {
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
@@ -29,10 +30,14 @@ class AuthController extends Controller
         Auth::login($user);
         $request->session()->regenerate();
 
-        return redirect()->route('dashboard');
+        if ($request->expectsJson()) {
+            return response()->json(['authenticated' => true, 'redirect' => route('verification.notice')]);
+        }
+
+        return redirect()->route('verification.notice');
     }
 
-    public function login(Request $request): RedirectResponse
+    public function login(Request $request): RedirectResponse|JsonResponse
     {
         $request->validate([
             'email' => ['required', 'email'],
@@ -46,6 +51,16 @@ class AuthController extends Controller
 
         $request->session()->regenerate();
 
+        if (! $request->user()->hasVerifiedEmail()) {
+            return $request->expectsJson()
+                ? response()->json(['authenticated' => true, 'redirect' => route('verification.notice')])
+                : redirect()->route('verification.notice');
+        }
+
+        if ($request->expectsJson()) {
+            return response()->json(['authenticated' => true]);
+        }
+
         return redirect()->intended(route('dashboard'));
     }
 
@@ -55,7 +70,7 @@ class AuthController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect()->route('login');
+        return redirect()->route('index');
     }
 
     public function forgotPassword(Request $request): RedirectResponse

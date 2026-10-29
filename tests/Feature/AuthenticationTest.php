@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\User;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Password;
@@ -16,10 +17,18 @@ class AuthenticationTest extends TestCase
 
     public function test_guests_can_open_forms_but_not_dashboard(): void
     {
-        foreach (['/login', '/register', '/forgot-password', '/reset-password/example?email=test@example.com'] as $url) {
+        foreach (['/forgot-password', '/reset-password/example?email=test@example.com'] as $url) {
             $this->get($url)->assertOk()->assertSee('name="_token"', false);
         }
         $this->get('/adminzone')->assertRedirect(route('login'));
+    }
+
+    public function test_login_and_registration_pages_redirect_to_home_with_modal(): void
+    {
+        foreach (['login', 'register'] as $screen) {
+            $this->get(route($screen))->assertRedirect(route('index'))->assertSessionHas('auth_screen', $screen);
+            $this->get(route('index'))->assertOk()->assertSee('data-initial-screen="'.$screen.'"', false);
+        }
     }
 
     public function test_registration_creates_user_and_logs_in(): void
@@ -27,10 +36,13 @@ class AuthenticationTest extends TestCase
         $this->post('/register', [
             'name' => 'Анна', 'email' => 'anna@example.com',
             'password' => 'secure-password', 'password_confirmation' => 'secure-password',
-        ])->assertRedirect(route('dashboard'));
+        ])->assertRedirect(route('verification.notice'));
         $user = User::where('email', 'anna@example.com')->firstOrFail();
         $this->assertAuthenticatedAs($user);
         $this->assertTrue(Hash::check('secure-password', $user->password));
+        $this->get('/adminzone')->assertRedirect(route('verification.notice'));
+        $user->markEmailAsVerified();
+        $this->actingAs($user->fresh());
         $this->get('/adminzone')->assertOk()->assertSee('Анна');
         $this->get('/login')->assertRedirect();
     }
@@ -51,9 +63,30 @@ class AuthenticationTest extends TestCase
         $user = User::factory()->create();
         $this->post('/login', ['email' => $user->email, 'password' => 'password', 'remember' => '1'])->assertRedirect(route('dashboard'));
         $this->assertAuthenticatedAs($user);
-        $this->post('/logout')->assertRedirect(route('login'));
+        $this->post('/logout')->assertRedirect(route('index'));
         $this->assertGuest();
         $this->get('/adminzone')->assertRedirect(route('login'));
+    }
+
+    public function test_legacy_password_is_upgraded_only_after_successful_login(): void
+    {
+        $user = User::factory()->create();
+        $legacyHash = sha1('legacy-password');
+        DB::table('users')->where('id', $user->id)->update(['password' => $legacyHash]);
+
+        $this->post('/login', ['email' => $user->email, 'password' => 'incorrect'])->assertSessionHasErrors('email');
+        $this->assertGuest();
+        $this->assertSame($legacyHash, $user->fresh()->password);
+
+        $this->post('/login', ['email' => $user->email, 'password' => 'legacy-password', 'remember' => true])
+            ->assertRedirect(route('dashboard'));
+        $this->assertAuthenticatedAs($user);
+        $this->assertTrue(Hash::check('legacy-password', $user->fresh()->password));
+        $this->assertNotSame($legacyHash, $user->fresh()->password);
+
+        $this->post('/logout');
+        $this->post('/login', ['email' => $user->email, 'password' => 'legacy-password'])->assertRedirect(route('dashboard'));
+        $this->assertAuthenticatedAs($user);
     }
 
     public function test_invalid_login_is_rejected_and_rate_limited(): void

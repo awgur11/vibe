@@ -11,5 +11,10 @@
             <div style="height: 24px"></div>
             @include('admin.details.settings.checkbox', ['key' => 'robots_follow', 'default' => true, 'title' => __('Дозволити пошуковим системам переходити за посиланнями')])
         </div>
+        @include('admin.details.settings.input', ['key' => 'index_title_seo_tag', 'title' => __('тег title для главной страницы'), 'languages' => true, 'max' => 255,])
+        @include('admin.details.settings.textarea', ['key' => 'index_description_seo_tag', 'title' => __('тег description для главной страницы'), 'languages' => true, 'max' => 555, 'hint' => __('Используйте s% для названия товара.')])
+
+        @include('admin.details.settings.input', ['key' => 'product_title_seo_tag', 'title' => __('Шаблон тега title для товара'), 'languages' => true, 'max' => 255, 'hint' => __('Используйте s% для названия товара.')])
+        @include('admin.details.settings.textarea', ['key' => 'product_description_seo_tag', 'title' => __('Шаблон тега description для товара'), 'languages' => true, 'max' => 555, 'hint' => __('Используйте s% для названия товара.')])
     </div>
 @endsection

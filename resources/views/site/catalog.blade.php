@@ -17,12 +17,7 @@
             </div>
         </section>
         <div class="container catalog-page-content">
-            <nav class="catalog-crumbs" aria-label="{{ __('Хлебные крошки') }}">
-                @foreach($crumbs as $crumb)
-                    @if(!$loop->first)<span aria-hidden="true">/</span>@endif
-                    @if($crumb['url'])<a href="{{ $crumb['url'] }}">{{ $crumb['title'] }}</a>@else<span aria-current="page">{{ $crumb['title'] }}</span>@endif
-                @endforeach
-            </nav>
+            @include('site.details.base.crumbs')
             @if($catalogs->isNotEmpty())
                 <section class="catalog-sections" aria-labelledby="catalogSectionsTitle">
                     <div class="section-head"><h2 id="catalogSectionsTitle">{{ __('Разделы каталога') }}</h2><span class="catalog-count">{{ __('Разделов: :count', ['count' => $catalogs->count()]) }}</span></div>

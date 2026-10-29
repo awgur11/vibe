@@ -21,7 +21,7 @@ class Order extends Model
 
     public const array DELIVERY_METHODS = ['nova_poshta' => 'Новая почта', 'pickup' => 'Самовывоз'];
 
-    protected $fillable = ['client_id', 'customer_type', 'name', 'phone', 'email', 'company_name', 'legal_address', 'tax_id', 'kpp', 'payment_method', 'total', 'status'];
+    protected $fillable = ['user_id', 'client_id', 'customer_type', 'name', 'phone', 'email', 'company_name', 'legal_address', 'tax_id', 'kpp', 'payment_method', 'total', 'status'];
 
     protected function casts(): array
     {

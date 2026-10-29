@@ -1,14 +1,17 @@
 <?php
 
+use App\Http\Controllers\AccountController;
 use App\Http\Controllers\AdminOrderController;
 use App\Http\Controllers\AdvController;
 use App\Http\Controllers\ArticleController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BrandController;
+use App\Http\Controllers\CallbackController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CatalogController;
 use App\Http\Controllers\ComparisonController;
 use App\Http\Controllers\EditorImageController;
+use App\Http\Controllers\EmailVerificationController;
 use App\Http\Controllers\FavoriteController;
 use App\Http\Controllers\FilterController;
 use App\Http\Controllers\FvalueController;
@@ -20,6 +23,7 @@ use App\Http\Controllers\PictureController;
 use App\Http\Controllers\ProductCommentController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ReorderController;
+use App\Http\Controllers\SearchController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\SiteController;
 use App\Http\Controllers\SiteProductController;
@@ -31,9 +35,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest')->group(function (): void {
-    Route::view('/login', 'auth.form', ['screen' => 'login'])->name('login');
+    Route::get('/login', fn () => redirect()->route('index')->with('auth_screen', 'login'))->name('login');
     Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1')->name('login.store');
-    Route::view('/register', 'auth.form', ['screen' => 'register'])->name('register');
+    Route::get('/register', fn () => redirect()->route('index')->with('auth_screen', 'register'))->name('register');
     Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:5,1')->name('register.store');
     Route::view('/forgot-password', 'auth.form', ['screen' => 'forgot'])->name('password.request');
     Route::post('/forgot-password', [AuthController::class, 'forgotPassword'])->middleware('throttle:5,1')->name('password.email');
@@ -44,8 +48,14 @@ Route::middleware('guest')->group(function (): void {
 
 });
 
+Route::middleware('auth')->group(function (): void {
+    Route::get('/email/verify', [EmailVerificationController::class, 'notice'])->name('verification.notice');
+    Route::get('/email/verify/{id}/{hash}', [EmailVerificationController::class, 'verify'])->middleware(['signed', 'throttle:6,1'])->name('verification.verify');
+    Route::post('/email/verification-notification', [EmailVerificationController::class, 'resend'])->middleware('throttle:6,1')->name('verification.send');
+});
+
 Route::middleware(['auth', 'auth.session'])->group(function (): void {
-    Route::prefix('adminzone')->group(function (): void {
+    Route::prefix('adminzone')->middleware('verified')->group(function (): void {
         Route::view('/', 'dashboard')->name('dashboard');
 
         Route::patch('/reorder/{resource}', ReorderController::class)->where('resource', '[a-z0-9_-]+')->name('reorder.update');
@@ -119,6 +129,10 @@ Route::group(['prefix' => config('app.url_prefix'), 'middleware' => ['redirect.b
         Route::get('/warehouses', [NovaPoshtaController::class, 'warehouses'])->name('warehouses');
     });
 
+    Route::middleware('auth')->group(function (): void {
+        Route::get('/account/profile', [AccountController::class, 'profile'])->name('account.profile');
+        Route::get('/account/orders', [AccountController::class, 'orders'])->name('account.orders');
+    });
     Route::get('/product/{product:slag}', [SiteProductController::class, 'show'])->name('product');
     Route::post('/product/{product:slag}/comments', [SiteProductController::class, 'comment'])->middleware('throttle:5,10')->name('product.comments.store');
     Route::get('/comparison/state', [ComparisonController::class, 'state'])->name('comparison.state');
@@ -134,6 +148,10 @@ Route::group(['prefix' => config('app.url_prefix'), 'middleware' => ['redirect.b
     Route::post('/order', [OrderController::class, 'store'])->name('order.store');
 
     Route::get('/', [SiteController::class, 'index'])->name('index');
+    Route::post('/callback', [CallbackController::class, 'store'])->middleware('throttle:3,10')->name('callback.store');
+    Route::get('/search', [SearchController::class, 'index'])->name('search');
+    Route::get('/search/suggestions', [SearchController::class, 'suggestions'])->middleware('throttle:120,1')->name('search.suggestions');
+    Route::get('/catalogs', [SiteController::class, 'catalogs'])->name('catalogs');
     Route::get('/catalog/{catalogSlag}', [SiteController::class, 'catalog'])->name('catalog');
     Route::get('/{blogSlag}/{articleSlag}', [SiteController::class, 'article'])->name('article');
     Route::get('/{slag}', [SiteController::class, 'page'])->name('page');

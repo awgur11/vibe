@@ -14,7 +14,8 @@
                 </select>
                 @error('parent_id')<p class="field-error">{{ $message }}</p>@enderror
             </div>
-            @include('admin.details.form.input', ['name' => 'slag', 'title' => __('Адреса каталогу (slag)'), 'languages' => false, 'value' => $catalog, 'note' => __('Латинські літери, цифри та дефіси. Якщо поле порожнє, адреса формується з назви.')])
+            @include('admin.details.form.input', ['name' => 'icon', 'title' => __('Классы иконки'), 'languages' => false, 'value' => $catalog, 'maxlength' => 100])
+        @include('admin.details.form.input', ['name' => 'slag', 'title' => __('Адреса каталогу (slag)'), 'languages' => false, 'value' => $catalog, 'note' => __('Латинські літери, цифри та дефіси. Якщо поле порожнє, адреса формується з назви.')])
         </div>
         @include('admin.details.form.input', ['name' => 'title', 'title' => __('Заголовок'), 'value' => $catalog, 'required' => true])
         @include('admin.details.form.textarea', ['name' => 'short_content', 'title' => __('Короткий опис'), 'value' => $catalog, 'rows' => 3])

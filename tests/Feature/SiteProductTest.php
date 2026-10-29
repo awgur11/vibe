@@ -48,6 +48,16 @@ class SiteProductTest extends TestCase
         $this->assertDatabaseCount('product_comments', 0);
     }
 
+    public function test_moderation_updates_status_asynchronously_and_returns_json(): void
+    {
+        $comment = ProductComment::factory()->create();
+        $this->actingAs(User::factory()->create())->patchJson(route('product-comments.update', $comment), ['status' => 'approved'])
+            ->assertOk()->assertJsonPath('status', 'approved')->assertJsonStructure(['message']);
+        $this->assertSame('approved', $comment->fresh()->status);
+        $this->patchJson(route('product-comments.update', $comment), ['status' => 'invalid'])->assertUnprocessable()->assertJsonValidationErrors('status');
+        $this->assertSame('approved', $comment->fresh()->status);
+    }
+
     public function test_moderation_is_protected_and_admin_can_approve_reject_and_delete(): void
     {
         $comment = ProductComment::factory()->create();

@@ -93,6 +93,7 @@ class OrderController extends Controller
                 ];
             }
             $order = Order::create([
+                'user_id' => $request->user()?->id,
                 'client_id' => $clientId,
                 'customer_type' => $data['customer_type'],
                 'name' => $data['name'],
