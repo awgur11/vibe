@@ -26,7 +26,7 @@ class AdminOrderTest extends TestCase
     {
         Order::factory()->count(26)->create();
         $latest = Order::latest('id')->first();
-        $this->actingAs(User::factory()->create())->get(route('orders.index'))->assertOk()
+        $this->actingAs(User::factory()->create(['is_admin' => true]))->get(route('orders.index'))->assertOk()
             ->assertViewHas('orders', fn ($orders): bool => $orders->count() === 25 && $orders->total() === 26 && $orders->first()->is($latest))
             ->assertSee(route('orders.show', $latest));
         $this->get(route('orders.index', ['page' => 2]))->assertOk()
@@ -35,19 +35,19 @@ class AdminOrderTest extends TestCase
 
     public function test_order_details_show_saved_items_company_and_delivery_even_after_product_deletion(): void
     {
-        $order = Order::factory()->create(['customer_type' => 'company', 'company_name' => 'Company Test', 'legal_address' => 'Legal Address', 'tax_id' => '12345678', 'kpp' => '87654321']);
+        $order = Order::factory()->for(User::factory()->state(['customer_type' => 'company', 'company_name' => 'Company Test', 'legal_address' => 'Legal Address', 'tax_id' => '12345678', 'kpp' => '87654321']))->create();
         $item = OrderItem::factory()->for($order)->create(['title' => 'Saved product', 'articule' => 'ABC-123']);
         $item->product->delete();
         OrderDelivery::factory()->for($order)->create(['delivery_method' => 'nova_poshta', 'pickup_address' => null, 'delivery_city' => 'Київ', 'delivery_warehouse' => 'Відділення №12']);
-        $this->actingAs(User::factory()->create())->get(route('orders.show', $order))->assertOk()
+        $this->actingAs(User::factory()->create(['is_admin' => true]))->get(route('orders.show', $order))->assertOk()
             ->assertSee('Saved product')->assertSee('ABC-123')->assertSee('Company Test')->assertSee('Legal Address')
-            ->assertSee('12345678')->assertSee('87654321')->assertSee('Київ')->assertSee('Відділення №12')->assertSee($order->email);
+            ->assertSee('12345678')->assertSee('87654321')->assertSee('Київ')->assertSee('Відділення №12')->assertSee($order->user->email);
     }
 
     public function test_pickup_address_and_legacy_orders_without_delivery_are_supported(): void
     {
         $order = Order::factory()->create();
-        $this->actingAs(User::factory()->create())->get(route('orders.show', $order))->assertOk();
+        $this->actingAs(User::factory()->create(['is_admin' => true]))->get(route('orders.show', $order))->assertOk();
         OrderDelivery::factory()->for($order)->create(['pickup_address' => 'Shop Address']);
         $this->get(route('orders.show', $order))->assertOk()->assertSee('Shop Address');
     }
@@ -55,7 +55,7 @@ class AdminOrderTest extends TestCase
     public function test_only_valid_status_can_be_updated_without_changing_order_prices(): void
     {
         $order = Order::factory()->create(['total' => '150.00']);
-        $this->actingAs(User::factory()->create())->patch(route('orders.update', $order), ['status' => 'processing', 'total' => '1.00'])
+        $this->actingAs(User::factory()->create(['is_admin' => true]))->patch(route('orders.update', $order), ['status' => 'processing', 'total' => '1.00'])
             ->assertRedirect(route('orders.show', $order))->assertSessionHasNoErrors();
         $this->assertSame('processing', $order->fresh()->status);
         $this->assertSame('150.00', $order->fresh()->total);
@@ -65,6 +65,6 @@ class AdminOrderTest extends TestCase
 
     public function test_unknown_order_returns_not_found(): void
     {
-        $this->actingAs(User::factory()->create())->get(route('orders.show', 999))->assertNotFound();
+        $this->actingAs(User::factory()->create(['is_admin' => true]))->get(route('orders.show', 999))->assertNotFound();
     }
 }

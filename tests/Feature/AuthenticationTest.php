@@ -43,7 +43,7 @@ class AuthenticationTest extends TestCase
         $this->get('/adminzone')->assertRedirect(route('verification.notice'));
         $user->markEmailAsVerified();
         $this->actingAs($user->fresh());
-        $this->get('/adminzone')->assertOk()->assertSee('Анна');
+        $this->get('/adminzone')->assertForbidden();
         $this->get('/login')->assertRedirect();
     }
 
@@ -61,7 +61,7 @@ class AuthenticationTest extends TestCase
     public function test_login_and_logout(): void
     {
         $user = User::factory()->create();
-        $this->post('/login', ['email' => $user->email, 'password' => 'password', 'remember' => '1'])->assertRedirect(route('dashboard'));
+        $this->post('/login', ['email' => $user->email, 'password' => 'password', 'remember' => '1'])->assertRedirect(route('index'));
         $this->assertAuthenticatedAs($user);
         $this->post('/logout')->assertRedirect(route('index'));
         $this->assertGuest();
@@ -79,13 +79,13 @@ class AuthenticationTest extends TestCase
         $this->assertSame($legacyHash, $user->fresh()->password);
 
         $this->post('/login', ['email' => $user->email, 'password' => 'legacy-password', 'remember' => true])
-            ->assertRedirect(route('dashboard'));
+            ->assertRedirect(route('index'));
         $this->assertAuthenticatedAs($user);
         $this->assertTrue(Hash::check('legacy-password', $user->fresh()->password));
         $this->assertNotSame($legacyHash, $user->fresh()->password);
 
         $this->post('/logout');
-        $this->post('/login', ['email' => $user->email, 'password' => 'legacy-password'])->assertRedirect(route('dashboard'));
+        $this->post('/login', ['email' => $user->email, 'password' => 'legacy-password'])->assertRedirect(route('index'));
         $this->assertAuthenticatedAs($user);
     }
 
@@ -117,7 +117,7 @@ class AuthenticationTest extends TestCase
         $this->assertTrue(Hash::check('new-password', $user->fresh()->password));
         $this->post('/reset-password', $payload)->assertSessionHasErrors('email');
         $this->post('/login', ['email' => $user->email, 'password' => 'password'])->assertSessionHasErrors('email');
-        $this->post('/login', ['email' => $user->email, 'password' => 'new-password'])->assertRedirect(route('dashboard'));
+        $this->post('/login', ['email' => $user->email, 'password' => 'new-password'])->assertRedirect(route('index'));
         $this->assertAuthenticatedAs($user);
     }
 

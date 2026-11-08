@@ -33,7 +33,7 @@ class AccountTest extends TestCase
         $user = User::factory()->create();
         $own = Order::factory()->create(['user_id' => $user->id]);
         Order::factory()->create(['user_id' => User::factory()->create()->id]);
-        Order::factory()->create(['email' => $user->email]);
+        Order::factory()->create();
         $this->actingAs($user)->get(route('account.orders'))->assertOk()
             ->assertViewHas('orders', fn ($orders): bool => $orders->modelKeys() === [$own->id]);
     }

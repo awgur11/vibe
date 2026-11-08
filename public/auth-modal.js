@@ -1,91 +1,91 @@
-(() => {
+jQuery(function ($) {
   'use strict';
-  const authControl = document.querySelector('[data-auth-control]');
-  const desktopSlot = document.querySelector('[data-auth-desktop-slot]');
-  const mobileSlot = document.querySelector('[data-auth-mobile-slot]');
-  if (authControl && desktopSlot && mobileSlot) {
+  const $authControl = $('[data-auth-control]');
+  const $desktopSlot = $('[data-auth-desktop-slot]');
+  const $mobileSlot = $('[data-auth-mobile-slot]');
+  if ($authControl.length && $desktopSlot.length && $mobileSlot.length) {
     const mobile = window.matchMedia('(max-width: 680px)');
     const placeAuthControl = () => {
-      const destination = mobile.matches ? mobileSlot : desktopSlot;
-      if (authControl.parentElement !== destination) destination.append(authControl);
+      const $destination = mobile.matches ? $mobileSlot : $desktopSlot;
+      if (!$authControl.parent().is($destination)) $authControl.appendTo($destination);
     };
     placeAuthControl();
-    mobile.addEventListener('change', placeAuthControl);
+    $(mobile).on('change', placeAuthControl);
   }
-  const account = document.querySelector('[data-account-menu]');
-  if (account) {
-    const toggle = account.querySelector('[data-account-toggle]');
-    const dropdown = account.querySelector('.header-account-dropdown');
-    const close = () => { dropdown.hidden = true; toggle.setAttribute('aria-expanded', 'false'); };
-    toggle.addEventListener('click', () => {
-      dropdown.hidden = !dropdown.hidden;
-      toggle.setAttribute('aria-expanded', String(!dropdown.hidden));
+  const $account = $('[data-account-menu]');
+  if ($account.length) {
+    const $toggle = $account.find('[data-account-toggle]');
+    const $dropdown = $account.find('.header-account-dropdown');
+    const close = () => { $dropdown.prop('hidden', true); $toggle.attr('aria-expanded', 'false'); };
+    $toggle.on('click', () => {
+      const open = $dropdown.prop('hidden');
+      $dropdown.prop('hidden', !open);
+      $toggle.attr('aria-expanded', String(open));
     });
-    document.addEventListener('click', event => { if (!account.contains(event.target)) close(); });
-    document.addEventListener('keydown', event => {
-      if (event.key === 'Escape' && !dropdown.hidden) { close(); toggle.focus(); }
-    });
-    account.addEventListener('focusout', event => { if (!account.contains(event.relatedTarget)) close(); });
+    $(document).on('click', event => { if (!$(event.target).closest($account).length) close(); })
+      .on('keydown', event => {
+        if (event.key === 'Escape' && !$dropdown.prop('hidden')) { close(); $toggle.trigger('focus'); }
+      });
+    $account.on('focusout', event => { if (!$(event.relatedTarget).closest($account).length) close(); });
   }
-  const dialog = document.querySelector('[data-auth-modal]');
-  if (!dialog) return;
-  const forms = [...dialog.querySelectorAll('[data-auth-form]')];
-  const tabs = [...dialog.querySelectorAll('[data-auth-tab]')];
-  const errors = dialog.querySelector('[data-auth-errors]');
+  const $dialog = $('[data-auth-modal]');
+  if (!$dialog.length) return;
+  const $forms = $dialog.find('[data-auth-form]');
+  const $tabs = $dialog.find('[data-auth-tab]');
+  const $errors = $dialog.find('[data-auth-errors]');
   let pending = false;
   function showErrors(messages) {
-    errors.replaceChildren();
-    messages.forEach(message => {
-      const p = document.createElement('p');
-      p.textContent = message;
-      errors.append(p);
-    });
-    errors.hidden = messages.length === 0;
+    $errors.empty().prop('hidden', messages.length === 0);
+    messages.forEach(message => $('<p>').text(message).appendTo($errors));
   }
-  document.querySelectorAll('[data-auth-open]').forEach(button => button.addEventListener('click', () => {
+  function focusForm() {
+    $forms.filter(function () { return !this.hidden; }).find('input:not([type=hidden])').first().trigger('focus');
+  }
+  $('[data-auth-open]').on('click', () => {
     showErrors([]);
-    dialog.showModal();
-    forms.find(form => !form.hidden)?.querySelector('input:not([type=hidden])')?.focus();
-  }));
-  dialog.querySelector('[data-auth-close]').addEventListener('click', () => dialog.close());
-  dialog.addEventListener('click', event => { if (event.target === dialog) dialog.close(); });
-  tabs.forEach(tab => tab.addEventListener('click', () => {
+    $dialog[0].showModal();
+    focusForm();
+  });
+  $dialog.find('[data-auth-close]').on('click', () => $dialog[0].close());
+  $dialog.on('click', event => { if (event.target === $dialog[0]) $dialog[0].close(); });
+  $tabs.on('click', function () {
     if (pending) return;
+    const $tab = $(this);
     showErrors([]);
-    forms.forEach(form => { form.hidden = form.dataset.authForm !== tab.dataset.authTab; });
-    tabs.forEach(button => button.setAttribute('aria-pressed', String(button === tab)));
-    forms.find(form => !form.hidden).querySelector('input:not([type=hidden])').focus();
-  }));
-  if (['login', 'register'].includes(dialog.dataset.initialScreen)) {
-    tabs.find(tab => tab.dataset.authTab === dialog.dataset.initialScreen)?.click();
-    dialog.showModal();
-    forms.find(form => !form.hidden)?.querySelector('input:not([type=hidden])')?.focus();
+    $forms.each(function () { $(this).prop('hidden', $(this).attr('data-auth-form') !== $tab.attr('data-auth-tab')); });
+    $tabs.attr('aria-pressed', 'false');
+    $tab.attr('aria-pressed', 'true');
+    focusForm();
+  });
+  const initialScreen = $dialog.attr('data-initial-screen');
+  if (['login', 'register'].includes(initialScreen)) {
+    $tabs.filter(function () { return $(this).attr('data-auth-tab') === initialScreen; }).trigger('click');
+    $dialog[0].showModal();
+    focusForm();
   }
-  forms.forEach(form => form.addEventListener('submit', async event => {
+  $forms.on('submit', async function (event) {
     event.preventDefault();
     if (pending) return;
+    const $form = $(this);
+    const $submit = $form.find('[type=submit]');
     pending = true;
-    const submit = form.querySelector('[type=submit]');
-    submit.disabled = true;
-    tabs.forEach(tab => { tab.disabled = true; });
+    $submit.add($tabs).prop('disabled', true);
     showErrors([]);
     try {
-      const refresh = await fetch(dialog.dataset.csrfUrl, {credentials: 'same-origin', cache: 'no-store', headers: {'Accept': 'application/json'}, signal: AbortSignal.timeout(15000)});
-      if (!refresh.ok) throw new Error('Session refresh failed');
-      const session = await refresh.json();
+      const session = await $.ajax({url: $dialog.attr('data-csrf-url'), cache: false, dataType: 'json', timeout: 15000});
       if (!session.token) throw new Error('Missing token');
-      form.querySelector('[name=_token]').value = session.token;
-      const response = await fetch(form.action, {method: 'POST', body: new FormData(form), credentials: 'same-origin', headers: {'Accept': 'application/json'}, signal: AbortSignal.timeout(15000)});
-      const data = await response.json();
-      if (!response.ok) {
-        showErrors(response.status === 422 ? Object.values(data.errors || {}).flat() : [dialog.dataset.error]);
-        return;
-      }
+      $form.find('[name=_token]').val(session.token);
+      const data = await $.ajax({url: $form.attr('action'), method: 'POST', data: new FormData(this),
+        processData: false, contentType: false, dataType: 'json', timeout: 15000});
       if (!data.authenticated) throw new Error('Authentication failed');
-      forms.forEach(item => item.querySelectorAll('[type=password]').forEach(input => { input.value = ''; }));
+      $forms.find('[type=password]').val('');
       if (data.redirect) window.location.assign(data.redirect);
       else window.location.reload();
-    } catch (error) { showErrors([dialog.dataset.error]); }
-    finally { pending = false; submit.disabled = false; tabs.forEach(tab => { tab.disabled = false; }); }
-  }));
-})();
+    } catch (error) {
+      showErrors(error.status === 422 ? Object.values(error.responseJSON?.errors || {}).flat() : [$dialog.attr('data-error')]);
+    } finally {
+      pending = false;
+      $submit.add($tabs).prop('disabled', false);
+    }
+  });
+});

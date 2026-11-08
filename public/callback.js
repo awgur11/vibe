@@ -1,38 +1,37 @@
-(() => {
-  const dialog = document.querySelector('[data-callback-modal]');
-  if (!dialog) return;
-  const form = dialog.querySelector('form');
-  const status = dialog.querySelector('[data-callback-status]');
+jQuery(function ($) {
+  'use strict';
+  const $dialog = $('[data-callback-modal]');
+  if (!$dialog.length) return;
+  const $form = $dialog.find('form');
+  const $status = $dialog.find('[data-callback-status]');
   let pending = false;
-  document.querySelectorAll('[data-callback-open]').forEach(button => button.addEventListener('click', () => {
-    dialog.showModal();
-    if (!form.hidden) form.querySelector('input:not([type=hidden])').focus();
-  }));
-  dialog.querySelector('[data-callback-close]').addEventListener('click', () => dialog.close());
-  dialog.addEventListener('click', event => { if (event.target === dialog) dialog.close(); });
-  form.addEventListener('submit', async event => {
+  $('[data-callback-open]').on('click', () => {
+    $dialog[0].showModal();
+    if (!$form.prop('hidden')) $form.find('input:not([type=hidden])').first().trigger('focus');
+  });
+  $dialog.find('[data-callback-close]').on('click', () => $dialog[0].close());
+  $dialog.on('click', event => { if (event.target === $dialog[0]) $dialog[0].close(); });
+  $form.on('submit', async function (event) {
     event.preventDefault();
     if (pending) return;
     pending = true;
-    const submit = form.querySelector('[type=submit]');
-    submit.disabled = true; status.hidden = true;
+    const $submit = $form.find('[type=submit]').prop('disabled', true);
+    $status.prop('hidden', true);
     try {
-      const refresh = await fetch(dialog.dataset.csrfUrl, {credentials: 'same-origin', cache: 'no-store', headers: {'Accept': 'application/json'}, signal: AbortSignal.timeout(15000)});
-      if (!refresh.ok) throw new Error();
-      const session = await refresh.json();
-      if (!session.token) throw new Error();
-      form.querySelector('[name=_token]').value = session.token;
-      const response = await fetch(form.action, {method: 'POST', body: new FormData(form), credentials: 'same-origin', headers: {'Accept': 'application/json'}, signal: AbortSignal.timeout(15000)});
-      const data = await response.json();
-      status.hidden = false;
-      if (!response.ok) {
-        status.className = 'auth-reg-errors';
-        status.textContent = response.status === 422 ? Object.values(data.errors || {}).flat().join(' ') : dialog.dataset.error;
-        return;
-      }
-      status.className = 'product-review-status'; status.textContent = data.message;
-      form.reset(); form.hidden = true;
-    } catch (error) { status.hidden = false; status.className = 'auth-reg-errors'; status.textContent = dialog.dataset.error; }
-    finally { pending = false; submit.disabled = false; }
+      const session = await $.ajax({url: $dialog.attr('data-csrf-url'), cache: false, dataType: 'json', timeout: 15000});
+      if (!session.token) throw new Error('Missing token');
+      $form.find('[name=_token]').val(session.token);
+      const data = await $.ajax({url: $form.attr('action'), method: 'POST', data: new FormData(this),
+        processData: false, contentType: false, dataType: 'json', timeout: 15000});
+      $status.prop('hidden', false).attr('class', 'product-review-status').text(data.message);
+      this.reset();
+      $form.prop('hidden', true);
+    } catch (error) {
+      $status.prop('hidden', false).attr('class', 'auth-reg-errors')
+        .text(error.status === 422 ? Object.values(error.responseJSON?.errors || {}).flat().join(' ') : $dialog.attr('data-error'));
+    } finally {
+      pending = false;
+      $submit.prop('disabled', false);
+    }
   });
-})();
+});

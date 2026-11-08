@@ -13,7 +13,7 @@ class ProductCommentController extends Controller
     public function index(): View
     {
         return view('admin.product-comments.index', ['comments' => ProductComment::with('product.translation')
-            ->orderByRaw("CASE WHEN status = 'pending' THEN 0 ELSE 1 END")->latest('id')->paginate(25)]);
+            ->orderByRaw('CASE WHEN status = 0 THEN 0 ELSE 1 END')->latest('id')->paginate(25)]);
     }
 
     public function update(ModerateProductCommentRequest $request, ProductComment $productComment): RedirectResponse|JsonResponse

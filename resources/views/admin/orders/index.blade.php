@@ -10,8 +10,8 @@
                 <tr>
                     <td><a href="{{ route('orders.show', $order) }}">#{{ $order->id }}</a></td>
                     <td>{{ $order->created_at->format('d.m.Y H:i') }}</td>
-                    <td>{{ $order->name }}@if($order->company_name)<br>{{ $order->company_name }}@endif</td>
-                    <td>{{ $order->phone }}</td><td>{{ $order->items_count }}</td><td>{{ $order->total }} ₴</td>
+                    <td>{{ $order->user->name }}@if($order->user->company_name)<br>{{ $order->user->company_name }}@endif</td>
+                    <td>{{ $order->user->phone }}</td><td>{{ $order->items_count }}</td><td>{{ $order->total }} ₴</td>
                     <td><span class="badge {{ $order->status === 'new' ? 'base' : ($order->status === 'completed' ? 'active' : '') }}">{{ __(\App\Models\Order::STATUSES[$order->status] ?? $order->status) }}</span></td>
                     <td><a class="button secondary" href="{{ route('orders.show', $order) }}">{{ __('Просмотр') }}</a></td>
                 </tr>

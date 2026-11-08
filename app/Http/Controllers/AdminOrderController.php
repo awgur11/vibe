@@ -11,12 +11,12 @@ class AdminOrderController extends Controller
 {
     public function index(): View
     {
-        return view('admin.orders.index', ['orders' => Order::with('delivery')->withCount('items')->latest('id')->paginate(25)]);
+        return view('admin.orders.index', ['orders' => Order::with('delivery', 'user')->withCount('items')->latest('id')->paginate(25)]);
     }
 
     public function show(Order $order): View
     {
-        return view('admin.orders.show', ['order' => $order->load('items', 'delivery')]);
+        return view('admin.orders.show', ['order' => $order->load('items', 'delivery', 'user')]);
     }
 
     public function update(UpdateOrderStatusRequest $request, Order $order): RedirectResponse

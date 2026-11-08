@@ -4,13 +4,14 @@ namespace App\Mail;
 
 use App\Models\Order;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldBeEncrypted;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
-class OrderPlaced extends Mailable implements ShouldQueue
+class OrderPlaced extends Mailable implements ShouldBeEncrypted, ShouldQueue
 {
     use Queueable, SerializesModels;
 
@@ -21,7 +22,7 @@ class OrderPlaced extends Mailable implements ShouldQueue
     /** @var list<int> */
     public array $backoff = [60, 300];
 
-    public function __construct(public Order $order, public bool $forAdmin = false)
+    public function __construct(public Order $order, public bool $forAdmin = false, public ?string $password = null)
     {
         $this->afterCommit();
     }

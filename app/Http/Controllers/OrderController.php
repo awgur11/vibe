@@ -7,14 +7,18 @@ use App\Mail\OrderPlaced;
 use App\Models\Cart;
 use App\Models\Order;
 use App\Models\Product;
+use App\Models\User;
 use App\Services\NovaPoshtaService;
+use App\Services\OneCService;
 use App\Services\SiteViewData;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use RuntimeException;
 use Throwable;
@@ -65,7 +69,9 @@ class OrderController extends Controller
     {
         $data = $request->validated();
         $delivery = $this->deliveryData($data);
-        $order = DB::transaction(function () use ($request, $data, $delivery): Order {
+        $password = null;
+        $order = DB::transaction(function () use ($request, $data, $delivery, &$password): Order {
+            $password = null;
             $clientId = $request->attributes->get('cart_client_id');
             $carts = Cart::where('client_id', $clientId)->where('expires_at', '>', now())->orderBy('id')->lockForUpdate()->get();
             if ($carts->isEmpty()) {
@@ -92,35 +98,54 @@ class OrderController extends Controller
                     'total' => $this->price($lineCents),
                 ];
             }
-            $order = Order::create([
-                'user_id' => $request->user()?->id,
-                'client_id' => $clientId,
+            $email = filled($data['email'] ?? null) ? Str::lower($data['email']) : null;
+            $user = $request->user() ?? ($email !== null ? User::whereRaw('LOWER(email) = ?', [$email])->lockForUpdate()->first() : null);
+            $customer = [
                 'customer_type' => $data['customer_type'],
                 'name' => $data['name'],
                 'phone' => $data['phone'],
-                'email' => $data['email'] ?? null,
                 'company_name' => $data['company_name'] ?? null,
                 'legal_address' => $data['legal_address'] ?? null,
                 'tax_id' => $data['tax_id'] ?? null,
                 'kpp' => $data['kpp'] ?? null,
+            ];
+            if ($user === null) {
+                $password = (string) random_int(10000000, 99999999);
+                $user = User::create([
+                    ...$customer,
+                    'email' => $email ?? 'fake'.Str::uuid().'@gm.com',
+                    'has_fake_email' => $email === null,
+                    'password' => $password,
+                ]);
+            } else {
+                $user->update($customer);
+            }
+            $order = Order::create([
+                'user_id' => $user->id,
+                'client_id' => $clientId,
                 'payment_method' => $data['payment_method'],
                 'total' => $this->price($totalCents),
                 'status' => 'new',
             ]);
             $order->delivery()->create($delivery);
             $order->items()->createMany($items);
+            app(OneCService::class)->exportOrder($order);
             Cart::whereIn('id', $carts->modelKeys())->delete();
 
             return $order;
         }, 3);
 
-        $order->load('items', 'delivery');
-        foreach ([['email' => $order->email, 'admin' => false], ['email' => setting('admin_email'), 'admin' => true]] as $recipient) {
+        $order->load('items', 'delivery', 'user');
+        if ($password !== null && ! $order->user->has_fake_email) {
+            Auth::login($order->user);
+            $request->session()->regenerate();
+        }
+        foreach ([['email' => $order->user->has_fake_email ? null : $order->user->email, 'admin' => false], ['email' => setting('admin_email'), 'admin' => true]] as $recipient) {
             if (! is_string($recipient['email']) || ! filter_var($recipient['email'], FILTER_VALIDATE_EMAIL)) {
                 continue;
             }
             try {
-                Mail::to($recipient['email'])->locale(app()->getLocale())->queue(new OrderPlaced($order, $recipient['admin']));
+                Mail::to($recipient['email'])->locale(app()->getLocale())->queue(new OrderPlaced($order, $recipient['admin'], $recipient['admin'] ? null : $password));
             } catch (Throwable $exception) {
                 report($exception);
             }

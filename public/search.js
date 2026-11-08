@@ -1,73 +1,79 @@
-(() => {
+jQuery(function ($) {
   'use strict';
-  const root = document.querySelector('[data-site-search]');
-  if (!root) return;
-  const input = root.querySelector('input');
-  const form = root.querySelector('form');
-  const popup = root.querySelector('#searchSuggestions');
-  const results = root.querySelector('[data-search-results]');
-  const status = root.querySelector('[data-search-status]');
-  const all = root.querySelector('[data-search-all]');
+  const $root = $('[data-site-search]');
+  if (!$root.length) return;
+  const $input = $root.find('input');
+  const $form = $root.find('form');
+  const $popup = $root.find('#searchSuggestions');
+  const $results = $root.find('[data-search-results]');
+  const $status = $root.find('[data-search-status]');
+  const $all = $root.find('[data-search-all]');
   let timer;
-  let controller;
+  let request;
   let version = 0;
   let selected = -1;
-  function close() { popup.hidden = true; input.setAttribute('aria-expanded', 'false'); input.removeAttribute('aria-activedescendant'); selected = -1; }
-  function cancel() { clearTimeout(timer); controller?.abort(); version++; }
+  function close() {
+    $popup.prop('hidden', true);
+    $input.attr('aria-expanded', 'false').removeAttr('aria-activedescendant');
+    selected = -1;
+  }
+  function cancel() {
+    clearTimeout(timer);
+    version++;
+    request?.abort();
+  }
+  function showPopup(query) {
+    const target = new URL($form.prop('action'));
+    target.searchParams.set('q', query);
+    $all.attr('href', target.href);
+    $popup.prop('hidden', false);
+    $input.attr('aria-expanded', 'true');
+  }
   async function search(query, requestVersion) {
-    controller = new AbortController();
+    request = $.ajax({url: $root.attr('data-suggestions-url'), data: {q: query}, dataType: 'json'});
     try {
-      const url = new URL(root.dataset.suggestionsUrl, window.location.href);
-      url.searchParams.set('q', query);
-      const response = await fetch(url, {headers: {'Accept': 'application/json'}, credentials: 'same-origin', signal: controller.signal});
-      if (!response.ok) throw new Error('Search failed');
-      const data = await response.json();
+      const data = await request;
       if (requestVersion !== version) return;
-      results.replaceChildren();
+      $results.empty();
       selected = -1;
       data.products.forEach((product, index) => {
-        const link = document.createElement('a');
-        link.href = product.url;
-        link.id = `search-option-${index}`;
-        link.setAttribute('role', 'option');
-        link.setAttribute('aria-selected', 'false');
-        link.tabIndex = -1;
-        if (product.image) { const image = document.createElement('img'); image.src = product.image; image.alt = ''; link.append(image); }
-        const title = document.createElement('span'); title.textContent = product.title;
-        const price = document.createElement('strong'); price.textContent = `${product.price} грн`;
-        link.append(title, price);
-        results.append(link);
+        const $link = $('<a>').attr({href: product.url, id: `search-option-${index}`,
+          role: 'option', 'aria-selected': 'false', tabindex: -1});
+        if (product.image) $('<img>').attr({src: product.image, alt: ''}).appendTo($link);
+        $('<span>').text(product.title).appendTo($link);
+        $('<strong>').text(`${product.price} грн`).appendTo($link);
+        $link.appendTo($results);
       });
-      status.textContent = data.products.length ? '' : root.dataset.empty;
-      const target = new URL(form.action); target.searchParams.set('q', query); all.href = target.href;
-      popup.hidden = false; input.setAttribute('aria-expanded', 'true');
+      $status.text(data.products.length ? '' : $root.attr('data-empty'));
+      showPopup(query);
     } catch (error) {
-      if (requestVersion !== version || error.name === 'AbortError') return;
-      results.replaceChildren(); status.textContent = root.dataset.error;
-      const target = new URL(form.action); target.searchParams.set('q', query); all.href = target.href;
-      popup.hidden = false; input.setAttribute('aria-expanded', 'true');
+      if (requestVersion !== version || error.statusText === 'abort') return;
+      $results.empty();
+      $status.text($root.attr('data-error'));
+      showPopup(query);
     }
   }
-  input.addEventListener('input', () => {
-    cancel(); close();
-    const query = input.value.trim();
+  $input.on('input', () => {
+    cancel();
+    close();
+    const query = $input.val().trim();
     if ([...query].length < 3) return;
     const requestVersion = version;
     timer = setTimeout(() => search(query, requestVersion), 300);
-  });
-  input.addEventListener('keydown', event => {
+  }).on('keydown', event => {
     if (event.key === 'Escape') { cancel(); close(); return; }
-    const links = [...results.children];
-    if (popup.hidden || !links.length) return;
+    const $links = $results.children();
+    if ($popup.prop('hidden') || !$links.length) return;
     if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
       event.preventDefault();
-      selected = selected < 0 ? (event.key === 'ArrowDown' ? 0 : links.length - 1) : (selected + (event.key === 'ArrowDown' ? 1 : -1) + links.length) % links.length;
-      links.forEach((link, index) => link.setAttribute('aria-selected', String(index === selected)));
-      input.setAttribute('aria-activedescendant', links[selected].id);
-      links[selected].scrollIntoView({block: 'nearest'});
+      selected = selected < 0 ? (event.key === 'ArrowDown' ? 0 : $links.length - 1)
+        : (selected + (event.key === 'ArrowDown' ? 1 : -1) + $links.length) % $links.length;
+      $links.attr('aria-selected', 'false').eq(selected).attr('aria-selected', 'true');
+      $input.attr('aria-activedescendant', $links.eq(selected).attr('id'));
+      $links[selected].scrollIntoView({block: 'nearest'});
     }
   });
-  form.addEventListener('submit', () => { cancel(); close(); });
-  document.addEventListener('click', event => { if (!root.contains(event.target)) { cancel(); close(); } });
-  root.addEventListener('focusout', event => { if (!root.contains(event.relatedTarget)) { cancel(); close(); } });
-})();
+  $form.on('submit', () => { cancel(); close(); });
+  $(document).on('click', event => { if (!$(event.target).closest($root).length) { cancel(); close(); } });
+  $root.on('focusout', event => { if (!$(event.relatedTarget).closest($root).length) { cancel(); close(); } });
+});

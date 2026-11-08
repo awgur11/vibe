@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#111215">
   {!! $site_seo ?? null !!}
-  <link rel="preload" href="assets/hero-car.webp" as="image" fetchpriority="high">
   <link rel="stylesheet" href="{{ asset('styles.css') }}?v={{ filemtime(public_path('styles.css')) }}">
+  <script src="{{ asset('vendor/jquery/jquery-3.7.1.min.js') }}" defer></script>
   <script src="{{ asset('catalogs-menu.js') }}?v={{ filemtime(public_path('catalogs-menu.js')) }}" defer></script>
   <script src="{{ asset('script.js') }}?v={{ filemtime(public_path('script.js')) }}" defer></script>
   <script src="{{ asset('cart.js') }}?v={{ filemtime(public_path('cart.js')) }}" defer></script>

@@ -18,9 +18,9 @@ class SiteProductTest extends TestCase
         $product = Product::factory()->for(Catalog::factory()->state(['public' => true]))->create(['public' => true, 'available' => 0, 'price' => 120]);
         $product->pictures()->create(['path' => 'products/first.jpg', 'position' => 0]);
         $product->pictures()->create(['path' => 'products/second.jpg', 'position' => 1]);
-        ProductComment::factory()->for($product)->create(['content' => 'Visible approved review', 'status' => 'approved']);
+        ProductComment::factory()->for($product)->create(['content' => 'Visible approved review', 'status' => 1]);
         ProductComment::factory()->for($product)->create(['content' => 'Private pending review']);
-        ProductComment::factory()->for($product)->create(['content' => 'Private rejected review', 'status' => 'rejected']);
+        ProductComment::factory()->for($product)->create(['content' => 'Private rejected review', 'status' => 2]);
         $this->get(route('product', ['product' => $product->slag]))->assertOk()->assertViewIs('site.product')
             ->assertSee('data-gallery-image', false)->assertSee('products/second.jpg')->assertSee('120.00')
             ->assertSee('Visible approved review')->assertDontSee('Private pending review')->assertDontSee('Private rejected review');
@@ -29,11 +29,11 @@ class SiteProductTest extends TestCase
     public function test_guest_comment_is_pending_even_when_approval_is_forged(): void
     {
         $product = Product::factory()->create(['public' => true, 'available' => 0]);
-        $this->post(route('product.comments.store', ['product' => $product->slag]), ['name' => 'Guest', 'content' => '<script>alert(1)</script>', 'status' => 'approved'])
+        $this->post(route('product.comments.store', ['product' => $product->slag]), ['name' => 'Guest', 'content' => '<script>alert(1)</script>', 'status' => 1])
             ->assertRedirect(route('product', ['product' => $product->slag]).'#reviews')->assertSessionHas('comment_status');
         $comment = ProductComment::sole();
-        $this->assertSame('pending', $comment->status);
-        $comment->update(['status' => 'approved']);
+        $this->assertSame(0, $comment->status);
+        $comment->update(['status' => 1]);
         $this->get(route('product', ['product' => $product->slag]))->assertOk()->assertSee('&lt;script&gt;alert(1)&lt;/script&gt;', false)
             ->assertDontSee('<script>alert(1)</script>', false)->assertSee('i-no-image');
     }
@@ -51,26 +51,26 @@ class SiteProductTest extends TestCase
     public function test_moderation_updates_status_asynchronously_and_returns_json(): void
     {
         $comment = ProductComment::factory()->create();
-        $this->actingAs(User::factory()->create())->patchJson(route('product-comments.update', $comment), ['status' => 'approved'])
-            ->assertOk()->assertJsonPath('status', 'approved')->assertJsonStructure(['message']);
-        $this->assertSame('approved', $comment->fresh()->status);
+        $this->actingAs(User::factory()->create(['is_admin' => true]))->patchJson(route('product-comments.update', $comment), ['status' => 1])
+            ->assertOk()->assertJsonPath('status', 1)->assertJsonStructure(['message']);
+        $this->assertSame(1, $comment->fresh()->status);
         $this->patchJson(route('product-comments.update', $comment), ['status' => 'invalid'])->assertUnprocessable()->assertJsonValidationErrors('status');
-        $this->assertSame('approved', $comment->fresh()->status);
+        $this->assertSame(1, $comment->fresh()->status);
     }
 
     public function test_moderation_is_protected_and_admin_can_approve_reject_and_delete(): void
     {
         $comment = ProductComment::factory()->create();
         $this->get(route('product-comments.index'))->assertRedirect(route('login'));
-        $this->patch(route('product-comments.update', $comment), ['status' => 'approved'])->assertRedirect(route('login'));
+        $this->patch(route('product-comments.update', $comment), ['status' => 1])->assertRedirect(route('login'));
         $this->delete(route('product-comments.destroy', $comment))->assertRedirect(route('login'));
-        $this->actingAs(User::factory()->create())->get(route('product-comments.index'))->assertOk()->assertSee($comment->content);
-        $this->patch(route('product-comments.update', $comment), ['status' => 'approved', 'content' => 'Forged replacement'])->assertSessionHasNoErrors();
-        $this->assertSame('approved', $comment->fresh()->status);
+        $this->actingAs(User::factory()->create(['is_admin' => true]))->get(route('product-comments.index'))->assertOk()->assertSee($comment->content);
+        $this->patch(route('product-comments.update', $comment), ['status' => 1, 'content' => 'Forged replacement'])->assertSessionHasNoErrors();
+        $this->assertSame(1, $comment->fresh()->status);
         $this->assertNotSame('Forged replacement', $comment->fresh()->content);
         $this->patch(route('product-comments.update', $comment), ['status' => 'invalid'])->assertSessionHasErrors('status');
-        $this->patch(route('product-comments.update', $comment), ['status' => 'rejected'])->assertSessionHasNoErrors();
-        $this->assertSame('rejected', $comment->fresh()->status);
+        $this->patch(route('product-comments.update', $comment), ['status' => 2])->assertSessionHasNoErrors();
+        $this->assertSame(2, $comment->fresh()->status);
         $this->delete(route('product-comments.destroy', $comment))->assertRedirect();
         $this->assertModelMissing($comment);
     }

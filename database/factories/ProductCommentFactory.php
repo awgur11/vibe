@@ -12,6 +12,6 @@ class ProductCommentFactory extends Factory
     /** @return array<string, mixed> */
     public function definition(): array
     {
-        return ['product_id' => Product::factory()->state(['public' => true, 'available' => 0]), 'name' => fake()->name(), 'content' => fake()->paragraph(), 'status' => 'pending'];
+        return ['product_id' => Product::factory()->state(['public' => true, 'available' => 0]), 'name' => fake()->name(), 'content' => fake()->paragraph(), 'status' => 0];
     }
 }

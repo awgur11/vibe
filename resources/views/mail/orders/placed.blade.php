@@ -3,16 +3,16 @@
 
 {{ __($forAdmin ? 'На сайте оформлен новый заказ.' : 'Спасибо! Ваш заказ принят.') }}
 
-**{{ __('Имя') }}:** {{ $order->name }}  
-**{{ __('Телефон') }}:** {{ $order->phone }}  
-@if ($order->email)
-**{{ __('Электронная почта') }}:** {{ $order->email }}  
+**{{ __('Имя') }}:** {{ $order->user->name }}  
+**{{ __('Телефон') }}:** {{ $order->user->phone }}  
+@if (! $order->user->has_fake_email)
+**{{ __('Электронная почта') }}:** {{ $order->user->email }}  
 @endif
-@if ($order->customer_type === 'company')
-**{{ __('Название компании') }}:** {{ $order->company_name }}  
-**{{ __('Юридический адрес') }}:** {{ $order->legal_address }}  
-**{{ __('ИНН') }}:** {{ $order->tax_id }}  
-**{{ __('КПП') }}:** {{ $order->kpp }}  
+@if ($order->user->customer_type === 'company')
+**{{ __('Название компании') }}:** {{ $order->user->company_name }}  
+**{{ __('Юридический адрес') }}:** {{ $order->user->legal_address }}  
+**{{ __('ИНН') }}:** {{ $order->user->tax_id }}  
+**{{ __('КПП') }}:** {{ $order->user->kpp }}  
 @endif
 
 <x-mail::table>
@@ -36,6 +36,13 @@
 {{ $order->delivery->delivery_city }}  
 {{ $order->delivery->delivery_warehouse }}
 @endif
+@endif
+
+@if (! $forAdmin && $password !== null)
+**{{ __('Электронная почта') }}:** {{ $order->user->email }}  
+**{{ __('Пароль') }}:** {{ $password }}
+
+<x-mail::button :url="route('login')">{{ __('Войти') }}</x-mail::button>
 @endif
 
 {{ config('app.name') }}

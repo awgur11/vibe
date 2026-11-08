@@ -16,6 +16,6 @@ class ModerateProductCommentRequest extends FormRequest
     /** @return array<string, mixed> */
     public function rules(): array
     {
-        return ['status' => ['required', 'string', Rule::in(array_keys(ProductComment::STATUSES))]];
+        return ['status' => ['required', 'integer', Rule::in(array_keys(ProductComment::STATUSES))]];
     }
 }

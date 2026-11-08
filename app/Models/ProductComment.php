@@ -12,9 +12,15 @@ class ProductComment extends Model
     /** @use HasFactory<ProductCommentFactory> */
     use HasFactory;
 
-    public const array STATUSES = ['pending' => 'Ожидает модерации', 'approved' => 'Одобрен', 'rejected' => 'Отклонён'];
+    public const array STATUSES = [0 => 'Ожидает модерации', 1 => 'Одобрен', 2 => 'Отклонён'];
 
     protected $fillable = ['name', 'content', 'status'];
+
+    /** @return array<string, string> */
+    protected function casts(): array
+    {
+        return ['status' => 'integer'];
+    }
 
     public function product(): BelongsTo
     {

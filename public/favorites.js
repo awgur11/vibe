@@ -1,49 +1,46 @@
-(() => {
+jQuery(function ($) {
   'use strict';
-  const root = document.querySelector('[data-favorites-ui]');
-  if (!root) return;
-  const buttons = [...document.querySelectorAll('[data-favorite-url]')];
+  const $root = $('[data-favorites-ui]');
+  if (!$root.length) return;
+  const $buttons = $('[data-favorite-url]');
   let ids = new Set();
   let token = '';
   let pending = false;
   function render() {
-    const count = document.getElementById('favoritesCount');
-    if (count) count.textContent = ids.size;
-    buttons.forEach(button => {
-      const active = ids.has(String(button.dataset.favorite));
-      button.classList.toggle('is-active', active);
-      button.setAttribute('aria-pressed', String(active));
-      button.setAttribute('aria-label', active ? button.dataset.removeLabel : button.dataset.addLabel);
+    $('#favoritesCount').text(ids.size);
+    $buttons.each(function () {
+      const $button = $(this);
+      const active = ids.has($button.attr('data-favorite'));
+      $button.toggleClass('is-active', active).attr({
+        'aria-pressed': String(active),
+        'aria-label': $button.attr(active ? 'data-remove-label' : 'data-add-label')
+      });
     });
   }
   async function request(url, method = 'GET') {
-    const response = await fetch(url, {
-      method, credentials: 'same-origin', cache: 'no-store',
-      headers: {'Accept': 'application/json', 'X-CSRF-TOKEN': token},
-      signal: AbortSignal.timeout(15000),
-    });
-    if (!response.ok) throw new Error('Favorites request failed');
-    const data = await response.json();
+    const data = await $.ajax({url, method, cache: false, dataType: 'json', timeout: 15000,
+      headers: {'X-CSRF-TOKEN': token}});
     ids = new Set(data.product_ids.map(String));
     token = data.token;
     render();
   }
-  let ready = request(root.dataset.stateUrl).catch(() => {});
-  buttons.forEach(button => button.addEventListener('click', async () => {
+  const ready = request($root.attr('data-state-url')).catch(() => {});
+  $buttons.on('click', async function () {
     if (pending) return;
+    const $button = $(this);
     pending = true;
-    button.disabled = true;
+    $button.prop('disabled', true);
     try {
       await ready;
-      await request(root.dataset.stateUrl);
-      const removing = ids.has(String(button.dataset.favorite));
-      await request(button.dataset.favoriteUrl, removing ? 'DELETE' : 'POST');
-      if (removing && document.querySelector('[data-favorites-page]')) window.location.reload();
+      await request($root.attr('data-state-url'));
+      const removing = ids.has($button.attr('data-favorite'));
+      await request($button.attr('data-favorite-url'), removing ? 'DELETE' : 'POST');
+      if (removing && $('[data-favorites-page]').length) window.location.reload();
     } catch (error) {
-      window.alert(root.dataset.error);
+      window.alert($root.attr('data-error'));
     } finally {
       pending = false;
-      button.disabled = false;
+      $button.prop('disabled', false);
     }
-  }));
-})();
+  });
+});

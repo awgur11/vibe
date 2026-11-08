@@ -61,7 +61,7 @@ class AuthController extends Controller
             return response()->json(['authenticated' => true]);
         }
 
-        return redirect()->intended(route('dashboard'));
+        return redirect()->intended(route($request->user()->is_admin ? 'dashboard' : 'index'));
     }
 
     public function logout(Request $request): RedirectResponse

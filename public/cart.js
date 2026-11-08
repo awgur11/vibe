@@ -1,17 +1,17 @@
-(() => {
+jQuery(function ($) {
   'use strict';
-  const root = document.querySelector('[data-cart-ui]');
-  if (!root) return;
-  const $ = selector => root.querySelector(selector);
-  const labels = root.dataset;
-  const productDialog = $('#cartProductDialog');
-  const cartDialog = $('#cartDialog');
-  const productForm = $('#cartProductForm');
-  const productSubmit = $('#cartProductSubmit');
-  const productError = $('#cartProductError');
-  const cartError = $('#cartError');
-  const quantityInput = $('#cartProductQuantity');
-  const money = value => new Intl.NumberFormat(labels.locale.replace('_', '-'), {minimumFractionDigits: 2, maximumFractionDigits: 2}).format(Number(value)) + ' грн';
+  const $root = $('[data-cart-ui]');
+  if (!$root.length) return;
+  const labels = $root.data();
+  const $productDialog = $root.find('#cartProductDialog');
+  const $cartDialog = $root.find('#cartDialog');
+  const $productForm = $root.find('#cartProductForm');
+  const $productSubmit = $root.find('#cartProductSubmit');
+  const $productError = $root.find('#cartProductError');
+  const $cartError = $root.find('#cartError');
+  const $quantityInput = $root.find('#cartProductQuantity');
+  const money = value => new Intl.NumberFormat(labels.locale.replace('_', '-'),
+    {minimumFractionDigits: 2, maximumFractionDigits: 2}).format(Number(value)) + ' грн';
   let scrollLocked = false;
   let previousOverflow = '';
   let returnFocus = null;
@@ -19,196 +19,146 @@
   let productAvailable = false;
 
   async function request(url, method = 'GET', body = null) {
-    const response = await fetch(url, {
-      method,
-      credentials: 'same-origin',
-      headers: {'Accept': 'application/json', 'Content-Type': 'application/json', 'X-CSRF-TOKEN': labels.csrf, 'X-Requested-With': 'XMLHttpRequest'},
-      ...(body === null ? {} : {body: JSON.stringify(body)})
-    });
-    const data = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(Object.values(data.errors ?? {}).flat()[0] || data.message || labels.errorLabel);
-    return data;
+    try {
+      return await $.ajax({url, method, dataType: 'json', contentType: 'application/json',
+        headers: {'X-CSRF-TOKEN': labels.csrf},
+        ...(body === null ? {} : {data: JSON.stringify(body)})});
+    } catch (error) {
+      const data = error.responseJSON || {};
+      throw new Error(Object.values(data.errors || {}).flat()[0] || data.message || labels.errorLabel);
+    }
   }
-
-  function showDialog(dialog) {
+  function showDialog($dialog) {
     if (!scrollLocked) {
       previousOverflow = document.body.style.overflow;
       returnFocus = document.activeElement;
       scrollLocked = true;
     }
-    document.body.style.overflow = 'hidden';
-    if (!dialog.open) dialog.showModal();
+    $('body').css('overflow', 'hidden');
+    if (!$dialog.prop('open')) $dialog[0].showModal();
   }
-
-  [productDialog, cartDialog].forEach(dialog => {
-    dialog.addEventListener('close', () => {
-      if (productDialog.open || cartDialog.open) return;
-      document.body.style.overflow = previousOverflow;
-      scrollLocked = false;
-      returnFocus?.focus?.();
-    });
-    dialog.addEventListener('click', event => {
-      if (event.target !== dialog) return;
-      const rect = dialog.getBoundingClientRect();
-      if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) dialog.close();
-    });
+  $productDialog.add($cartDialog).on('close', () => {
+    if ($productDialog.prop('open') || $cartDialog.prop('open')) return;
+    $('body').css('overflow', previousOverflow);
+    scrollLocked = false;
+    $(returnFocus).trigger('focus');
+  }).on('click', function (event) {
+    if (event.target !== this) return;
+    const rect = this.getBoundingClientRect();
+    if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) this.close();
   });
-  root.querySelectorAll('[data-cart-close]').forEach(button => button.addEventListener('click', () => button.closest('dialog').close()));
+  $root.on('click', '[data-cart-close]', function () { $(this).closest('dialog')[0].close(); });
 
   function productImage(url, title = '') {
-    if (url) {
-      const image = document.createElement('img');
-      image.src = url;
-      image.alt = title;
-      image.loading = 'lazy';
-      return image;
-    }
-    const placeholder = document.createElement('span');
-    placeholder.className = 'shop-cart-image-placeholder';
-    placeholder.setAttribute('aria-hidden', 'true');
-    placeholder.innerHTML = '<svg class="icon"><use href="#i-no-image"/></svg>';
-    return placeholder;
+    if (url) return $('<img>').attr({src: url, alt: title, loading: 'lazy'});
+    return $('<span>').addClass('shop-cart-image-placeholder').attr('aria-hidden', 'true')
+      .append('<svg class="icon"><use href="#i-no-image"/></svg>');
   }
-
   function renderCart(data) {
-    const counter = document.getElementById('cartCount');
-    if (counter) counter.textContent = data.count;
-    $('#cartCheckoutLink').hidden = data.count === 0;
-    $('#cartTotal').textContent = money(data.total);
-    const items = $('#cartItems');
-    items.replaceChildren();
-    if (!data.items.length) {
-      const empty = document.createElement('p');
-      empty.className = 'shop-cart-empty';
-      empty.textContent = labels.emptyLabel;
-      items.append(empty);
-    }
+    $('#cartCount').text(data.count);
+    $root.find('#cartCheckoutLink').prop('hidden', data.count === 0);
+    $root.find('#cartTotal').text(money(data.total));
+    const $items = $root.find('#cartItems').empty();
+    if (!data.items.length) $('<p>').addClass('shop-cart-empty').text(labels.emptyLabel).appendTo($items);
     data.items.forEach(item => {
-      const row = document.createElement('article');
-      row.className = 'shop-cart-line';
-      const details = document.createElement('div');
-      details.className = 'shop-cart-line-info';
-      const title = document.createElement('strong');
-      title.textContent = item.title;
-      const price = document.createElement('small');
-      price.textContent = money(item.price);
-      const quantity = document.createElement('input');
-      quantity.type = 'number';
-      quantity.min = '1';
-      quantity.max = quantityInput.max;
-      quantity.step = '1';
-      quantity.value = item.quantity;
-      quantity.inputMode = 'numeric';
-      quantity.disabled = item.can_update === false;
-      quantity.setAttribute('aria-label', `${labels.quantityLabel}: ${item.title}`);
-      const total = document.createElement('b');
-      total.className = 'shop-cart-line-total';
-      total.textContent = money(item.total);
-      const remove = document.createElement('button');
-      remove.type = 'button';
-      remove.className = 'shop-cart-remove';
-      remove.setAttribute('aria-label', `${labels.removeLabel}: ${item.title}`);
-      remove.title = labels.removeLabel;
-      remove.innerHTML = '<svg class="icon" aria-hidden="true"><use href="#i-trash"/></svg>';
-      details.append(title, price, quantity);
-      row.append(productImage(item.preview), details, total, remove);
-      items.append(row);
+      const $row = $('<article>').addClass('shop-cart-line');
+      const $details = $('<div>').addClass('shop-cart-line-info');
+      const $title = $('<strong>').text(item.title);
+      const $price = $('<small>').text(money(item.price));
+      const $quantity = $('<input>').attr({type: 'number', min: 1, max: $quantityInput.attr('max'), step: 1,
+        inputmode: 'numeric', 'aria-label': `${labels.quantityLabel}: ${item.title}`})
+        .val(item.quantity).prop('disabled', item.can_update === false);
+      const $total = $('<b>').addClass('shop-cart-line-total').text(money(item.total));
+      const $remove = $('<button>').attr({type: 'button', title: labels.removeLabel,
+        'aria-label': `${labels.removeLabel}: ${item.title}`}).addClass('shop-cart-remove')
+        .append('<svg class="icon" aria-hidden="true"><use href="#i-trash"/></svg>');
+      $details.append($title, $price, $quantity);
+      $row.append(productImage(item.preview), $details, $total, $remove).appendTo($items);
       async function changeItem(method, body = null) {
-        cartError.textContent = '';
-        quantity.disabled = true;
-        remove.disabled = true;
+        $cartError.text('');
+        $quantity.add($remove).prop('disabled', true);
         try {
           renderCart(await request(method === 'DELETE' ? item.remove_url : item.update_url, method, body));
         } catch (error) {
-          cartError.textContent = error.message || labels.errorLabel;
-          quantity.value = item.quantity;
+          $cartError.text(error.message || labels.errorLabel);
+          $quantity.val(item.quantity);
         } finally {
-          quantity.disabled = item.can_update === false;
-          remove.disabled = false;
+          $quantity.prop('disabled', item.can_update === false);
+          $remove.prop('disabled', false);
         }
       }
-      quantity.addEventListener('change', () => {
-        if (!quantity.reportValidity()) return;
-        changeItem('PATCH', {quantity: Number(quantity.value)});
+      $quantity.on('change', function () {
+        if (this.reportValidity()) changeItem('PATCH', {quantity: Number($quantity.val())});
       });
-      remove.addEventListener('click', () => changeItem('DELETE'));
+      $remove.on('click', () => changeItem('DELETE'));
     });
   }
-
   async function loadCart() {
     const data = await request(labels.indexUrl);
     renderCart(data);
     return data;
   }
   const initialized = loadCart().catch(() => null);
-
-  document.addEventListener('click', async event => {
-    const button = event.target.closest('.add-cart[data-cart-product-url]');
-    if (!button || button.disabled) return;
+  $(document).on('click', '.add-cart[data-cart-product-url]', async function (event) {
+    const $button = $(this);
+    if ($button.prop('disabled')) return;
     event.preventDefault();
     const sequence = ++productRequest;
     productAvailable = false;
-    productSubmit.disabled = true;
-    productForm.elements.product_id.value = '';
-    quantityInput.value = '1';
-    productError.textContent = '';
-    $('#cartProductName').textContent = labels.loadingLabel;
-    $('#cartProductPrice').textContent = '';
-    $('#cartProductImage').hidden = true;
-    $('#cartProductPlaceholder').toggleAttribute('hidden', true);
-    showDialog(productDialog);
+    $productSubmit.prop('disabled', true);
+    $productForm.find('[name=product_id]').val('');
+    $quantityInput.val('1');
+    $productError.text('');
+    $root.find('#cartProductName').text(labels.loadingLabel);
+    $root.find('#cartProductPrice').text('');
+    $root.find('#cartProductImage, #cartProductPlaceholder').prop('hidden', true);
+    showDialog($productDialog);
     try {
       await initialized;
-      const data = await request(button.dataset.cartProductUrl);
-      if (sequence !== productRequest || !productDialog.open) return;
+      const data = await request($button.attr('data-cart-product-url'));
+      if (sequence !== productRequest || !$productDialog.prop('open')) return;
       const product = data.product;
-      productForm.elements.product_id.value = product.id;
-      $('#cartProductName').textContent = product.title;
-      $('#cartProductPrice').textContent = money(product.price);
-      $('#cartProductImage').hidden = !product.preview;
-      $('#cartProductPlaceholder').toggleAttribute('hidden', Boolean(product.preview));
-      if (product.preview) $('#cartProductImage').src = product.preview;
+      $productForm.find('[name=product_id]').val(product.id);
+      $root.find('#cartProductName').text(product.title);
+      $root.find('#cartProductPrice').text(money(product.price));
+      $root.find('#cartProductImage').prop('hidden', !product.preview);
+      $root.find('#cartProductPlaceholder').prop('hidden', Boolean(product.preview));
+      if (product.preview) $root.find('#cartProductImage').attr('src', product.preview);
       productAvailable = product.can_add_to_cart;
-      productSubmit.disabled = !productAvailable;
-      if (!productAvailable) productError.textContent = labels.unavailableLabel;
+      $productSubmit.prop('disabled', !productAvailable);
+      if (!productAvailable) $productError.text(labels.unavailableLabel);
     } catch (error) {
-      if (sequence === productRequest) productError.textContent = error.message || labels.errorLabel;
+      if (sequence === productRequest) $productError.text(error.message || labels.errorLabel);
     }
   });
-
-  root.querySelectorAll('[data-cart-quantity-step]').forEach(button => button.addEventListener('click', () => {
-    if (Number(button.dataset.cartQuantityStep) > 0) quantityInput.stepUp();
-    else quantityInput.stepDown();
-  }));
-  productForm.addEventListener('submit', async event => {
+  $root.on('click', '[data-cart-quantity-step]', function () {
+    if (Number($(this).attr('data-cart-quantity-step')) > 0) $quantityInput[0].stepUp();
+    else $quantityInput[0].stepDown();
+  });
+  $productForm.on('submit', async function (event) {
     event.preventDefault();
-    if (productSubmit.disabled || !productForm.reportValidity()) return;
-    productSubmit.disabled = true;
-    productError.textContent = '';
+    if ($productSubmit.prop('disabled') || !this.reportValidity()) return;
+    $productSubmit.prop('disabled', true);
+    $productError.text('');
     try {
       await initialized;
-      const data = await request(labels.storeUrl, 'POST', {product_id: Number(productForm.elements.product_id.value), quantity: Number(quantityInput.value)});
-      renderCart(data);
-      cartError.textContent = '';
-      productDialog.close();
-      showDialog(cartDialog);
-    } catch (error) {
-      productError.textContent = error.message || labels.errorLabel;
-    } finally {
-      productSubmit.disabled = !productAvailable;
+      renderCart(await request(labels.storeUrl, 'POST', {
+        product_id: Number($productForm.find('[name=product_id]').val()), quantity: Number($quantityInput.val())
+      }));
+      $cartError.text('');
+      $productDialog[0].close();
+      showDialog($cartDialog);
+    } catch (error) { $productError.text(error.message || labels.errorLabel); }
+    finally { $productSubmit.prop('disabled', !productAvailable); }
+  });
+  $('#cartButton').on('click', async () => {
+    $cartError.text('');
+    $root.find('#cartItems').text(labels.loadingLabel);
+    showDialog($cartDialog);
+    try { await initialized; await loadCart(); }
+    catch (error) {
+      $cartError.text(error.message || labels.errorLabel);
+      $root.find('#cartItems').text('');
     }
   });
-
-  document.getElementById('cartButton')?.addEventListener('click', async () => {
-    cartError.textContent = '';
-    $('#cartItems').textContent = labels.loadingLabel;
-    showDialog(cartDialog);
-    try {
-      await initialized;
-      await loadCart();
-    } catch (error) {
-      cartError.textContent = error.message || labels.errorLabel;
-      $('#cartItems').textContent = '';
-    }
-  });
-})();
+});

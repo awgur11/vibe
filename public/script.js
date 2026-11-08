@@ -1,283 +1,218 @@
-/* KINGAVTO — интерактивный фронтенд-макет без сервера и фреймворков.
-   Реальные товары, цены, поиск, оформление заказов и VIN-заявки подключаются к вашему Laravel API. */
-(() => {
+jQuery(function ($) {
   'use strict';
-  const $ = (selector, root = document) => root.querySelector(selector);
-  const $$ = (selector, root = document) => [...(root ?? document).querySelectorAll(selector)];
-
-  const getJSON = (key, fallback) => {
-    try { return JSON.parse(localStorage.getItem(key)) ?? fallback; }
-    catch { return fallback; }
-  };
-  const setJSON = (key, val) => {
-    try { localStorage.setItem(key, JSON.stringify(val)); } catch { /* private mode */ }
-  };
-
-  // Catalog menu
   const categoryNames = {
-    parts:'Запчасти', tires:'Шины', wheels:'Диски', tools:'Инструменты',
-    accessories:'Автоаксессуары', oils:'Масла', batteries:'Аккумуляторы',
-    brakes:'Тормозная система', suspension:'Подвеска', filters:'Фильтры',
-    lighting:'Освещение', electrics:'Электрика'
+    parts: 'Запчасти', tires: 'Шины', wheels: 'Диски', tools: 'Инструменты',
+    accessories: 'Автоаксессуары', oils: 'Масла', batteries: 'Аккумуляторы',
+    brakes: 'Тормозная система', suspension: 'Подвеска', filters: 'Фильтры',
+    lighting: 'Освещение', electrics: 'Электрика'
   };
   const closeCatalog = () => {
-    const dropdown = $('#catalogDropdown');
-    const toggle = $('#catalogToggle');
-    if (dropdown) dropdown.hidden = true;
-    if (toggle) toggle.setAttribute('aria-expanded', 'false');
+    $('#catalogDropdown').prop('hidden', true);
+    $('#catalogToggle').attr('aria-expanded', 'false');
   };
-
-  const mobileNav = $('#mainNav');
-  const mobileToggle = $('#mobileNavToggle');
+  const $mobileNav = $('#mainNav');
+  const $mobileToggle = $('#mobileNavToggle');
   const closeMobile = () => {
-    mobileNav.classList.remove('is-open');
-    mobileToggle.setAttribute('aria-expanded','false');
+    $mobileNav.removeClass('is-open');
+    $mobileToggle.attr('aria-expanded', 'false');
   };
-  mobileToggle.addEventListener('click', () => {
-    const isOpen = mobileNav.classList.toggle('is-open');
-    mobileToggle.setAttribute('aria-expanded',String(isOpen));
+  $mobileToggle.on('click', () => {
+    $mobileNav.toggleClass('is-open');
+    $mobileToggle.attr('aria-expanded', String($mobileNav.hasClass('is-open')));
   });
-  mobileNav.addEventListener('click', e => {
-    if (e.defaultPrevented) return;
-    if (e.target.closest('a')) { closeMobile(); closeCatalog(); }
+  $mobileNav.on('click', event => {
+    if (!event.isDefaultPrevented() && $(event.target).closest('a').length) { closeMobile(); closeCatalog(); }
   });
 
-  // Product listing, search, and filters
-  const productsGrid = $('#productsGrid');
-  const cards = productsGrid ? $$('.product-card', productsGrid) : [];
-  const filterBtns = $$('.filter-btn');
-  const empty = $('#emptyProducts');
+  const $productsGrid = $('#productsGrid');
+  const $cards = $productsGrid.find('.product-card');
+  const $filterButtons = $('.filter-btn');
   let activeFilter = 'all';
   let searchTerm = '';
   let expanded = true;
-
   function renderProducts() {
-    if (!productsGrid) return;
-    let count = 0;
-    const matches = cards.filter(card => {
-      const categories = (card.dataset.category || '').split(' ');
-      const name = (card.dataset.name || '').toLocaleLowerCase('ru');
+    if (!$productsGrid.length) return;
+    const $matches = $cards.filter(function () {
+      const categories = ($(this).attr('data-category') || '').split(' ');
+      const name = ($(this).attr('data-name') || '').toLocaleLowerCase('ru');
       const categoryMatch = activeFilter === 'all' || categories.includes(activeFilter);
-      const queryMatch = !searchTerm || name.includes(searchTerm) || categories.some(c => (categoryNames[c] || '').toLocaleLowerCase('ru').includes(searchTerm));
+      const queryMatch = !searchTerm || name.includes(searchTerm)
+        || categories.some(category => (categoryNames[category] || '').toLocaleLowerCase('ru').includes(searchTerm));
       return categoryMatch && queryMatch;
     });
-    cards.forEach(card => { card.hidden = true; });
-    const visible = (activeFilter === 'all' && !searchTerm && !expanded) ? matches.slice(0,5) : matches;
-    visible.forEach(card => { card.hidden = false; count++; });
-    if (empty) empty.hidden = count > 0;
-    const showAll = $('#showAllProducts');
-    if (showAll) {
-      showAll.textContent = expanded ? showAll.dataset.collapseLabel : showAll.dataset.expandLabel;
-      showAll.insertAdjacentHTML('beforeend', ' <svg class="icon"><use href="#i-arrow"/></svg>');
+    $cards.prop('hidden', true);
+    const $visible = activeFilter === 'all' && !searchTerm && !expanded ? $matches.slice(0, 5) : $matches;
+    $visible.prop('hidden', false);
+    $('#emptyProducts').prop('hidden', $visible.length > 0);
+    const $showAll = $('#showAllProducts');
+    if ($showAll.length) {
+      $showAll.text($showAll.attr(expanded ? 'data-collapse-label' : 'data-expand-label'))
+        .append(' <svg class="icon"><use href="#i-arrow"/></svg>');
     }
-    filterBtns.forEach(button => {
-      const pressed = button.dataset.filter === activeFilter;
-      button.classList.toggle('is-active',pressed);
-      button.setAttribute('aria-pressed',String(pressed));
+    $filterButtons.each(function () {
+      const $button = $(this);
+      const pressed = $button.attr('data-filter') === activeFilter;
+      $button.toggleClass('is-active', pressed).attr('aria-pressed', String(pressed));
     });
   }
-
   function selectCategory(category) {
     activeFilter = category;
     expanded = true;
     searchTerm = '';
-    $('#siteSearch').value = '';
+    $('#siteSearch').val('');
     renderProducts();
   }
-  filterBtns.forEach(btn => btn.addEventListener('click', () => selectCategory(btn.dataset.filter)));
-  $('#showAllProducts')?.addEventListener('click', e => {
-    e.preventDefault();
-    if (activeFilter !== 'all' || searchTerm) { activeFilter='all';searchTerm='';$('#siteSearch').value='';expanded=true; }
-    else { expanded = !expanded; }
-    renderProducts();
+  $filterButtons.on('click', function () { selectCategory($(this).attr('data-filter')); });
+  $('#showAllProducts').on('click', event => {
+    event.preventDefault();
+    if (activeFilter !== 'all' || searchTerm) { selectCategory('all'); }
+    else { expanded = !expanded; renderProducts(); }
   });
-  document.addEventListener('click', e => {
-    const cat = e.target.closest('[data-select-category], .category-card[data-category]');
-    if (cat) {
-      const category = cat.dataset.selectCategory || cat.dataset.category;
-      if (category) {
-        selectCategory(category);
-        closeCatalog();
-        // Other links can target #categories; navigate to results if selected.
-        e.preventDefault();
-        $('#products').scrollIntoView({behavior:'smooth'});
-      }
-    }
-  });
-  // Favorites and comparisons
-  const toastElement = $('#toast');
-  let toastTimeout;
-  function toast(message) {
-    if (!toastElement) return;
-    toastElement.textContent = message;
-    toastElement.classList.add('show');
-    clearTimeout(toastTimeout);
-    toastTimeout = setTimeout(() => toastElement.classList.remove('show'), 2600);
-  }
-  document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') { closeCatalog();closeMobile(); }
+  $(document).on('click', '[data-select-category], .category-card[data-category]', function (event) {
+    const category = $(this).attr('data-select-category') || $(this).attr('data-category');
+    if (!category) return;
+    selectCategory(category);
+    closeCatalog();
+    event.preventDefault();
+    $('#products')[0]?.scrollIntoView({behavior: 'smooth'});
+  }).on('keydown', event => {
+    if (event.key === 'Escape') { closeCatalog(); closeMobile(); }
   });
 
-  // News carousel: native horizontal scroll and accessible buttons
-  const track = $('#newsTrack');
-  const news = $$('.news-card',track);
-  const dots = $('#newsDots');
+  const $track = $('#newsTrack');
+  const $news = $track.find('.news-card');
+  const $dots = $('#newsDots');
   let newsIndex = 0;
-  function visibleNews() { return window.innerWidth <= 680 ? 1 : window.innerWidth <= 900 ? 2 : 3; }
-  function maxNewsIndex() {return Math.max(0,news.length - visibleNews());}
-  function newsStep() { return news.length > 1 ? news[1].offsetLeft-news[0].offsetLeft : 1; }
+  const visibleNews = () => window.innerWidth <= 680 ? 1 : window.innerWidth <= 900 ? 2 : 3;
+  const maxNewsIndex = () => Math.max(0, $news.length - visibleNews());
+  const newsStep = () => $news.length > 1 ? $news[1].offsetLeft - $news[0].offsetLeft : 1;
   function updateNewsDots() {
-    if (!dots || !track) return;
-    const count=maxNewsIndex()+1;
-    dots.innerHTML='';
-    for(let index=0;index<count;index++) {
-      const dot=document.createElement('button');
-      dot.type='button';
-      dot.classList.toggle('active',index === newsIndex);
-      dot.setAttribute('aria-label', dots.dataset.groupLabel.replace(':number', String(index + 1)));
-      dot.setAttribute('aria-current',String(index === newsIndex));
-      dot.addEventListener('click',()=>scrollNews(index));
-      dots.append(dot);
+    if (!$dots.length || !$track.length) return;
+    $dots.empty();
+    for (let index = 0; index <= maxNewsIndex(); index++) {
+      $('<button>').attr({type: 'button',
+        'aria-label': ($dots.attr('data-group-label') || '').replace(':number', String(index + 1)),
+        'aria-current': String(index === newsIndex)})
+        .toggleClass('active', index === newsIndex).on('click', () => scrollNews(index)).appendTo($dots);
     }
-    $('#newsPrev').disabled=newsIndex===0;
-    $('#newsNext').disabled=newsIndex>=maxNewsIndex();
+    $('#newsPrev').prop('disabled', newsIndex === 0);
+    $('#newsNext').prop('disabled', newsIndex >= maxNewsIndex());
   }
   function scrollNews(index) {
-    if (!track) return;
-    newsIndex=Math.max(0,Math.min(maxNewsIndex(),index));
-    track.scrollTo({left:newsIndex*newsStep(),behavior:'smooth'});
+    if (!$track.length) return;
+    newsIndex = Math.max(0, Math.min(maxNewsIndex(), index));
+    $track[0].scrollTo({left: newsIndex * newsStep(), behavior: 'smooth'});
     updateNewsDots();
   }
-  $('#newsPrev')?.addEventListener('click',()=>scrollNews(newsIndex-1));
-  $('#newsNext')?.addEventListener('click',()=>scrollNews(newsIndex+1));
+  $('#newsPrev').on('click', () => scrollNews(newsIndex - 1));
+  $('#newsNext').on('click', () => scrollNews(newsIndex + 1));
   let resizeTimer;
-  window.addEventListener('resize',()=> {
+  $(window).on('resize', () => {
     clearTimeout(resizeTimer);
-    resizeTimer=setTimeout(()=>scrollNews(Math.min(newsIndex,maxNewsIndex())),120);
+    resizeTimer = setTimeout(() => scrollNews(Math.min(newsIndex, maxNewsIndex())), 120);
   });
-  track?.addEventListener('scroll', () => {
-    const estimated=Math.max(0,Math.min(maxNewsIndex(), Math.round(track.scrollLeft/newsStep())));
-    if (estimated!==newsIndex) {newsIndex=estimated;updateNewsDots();}
-  },{passive:true});
+  $track.on('scroll', () => {
+    const estimated = Math.max(0, Math.min(maxNewsIndex(), Math.round($track.scrollLeft() / newsStep())));
+    if (estimated !== newsIndex) { newsIndex = estimated; updateNewsDots(); }
+  });
 
-  // VIN form: client-side validation only. No submission to a server.
-  let formMode='vin';
-  $$('.vin-tab').forEach(button => button.addEventListener('click',()=> {
-    formMode=button.dataset.mode;
-    $$('.vin-tab').forEach(btn => {
-      const selected=btn === button;
-      btn.classList.toggle('active',selected);
-      btn.setAttribute('aria-pressed',String(selected));
-    });
-    const input=$('#vinInput');
-    input.value='';
-    input.maxLength=formMode==='vin'?17:100;
-    input.placeholder=formMode==='vin'?'Введите VIN-код вашего автомобиля':'Марка, модель и год выпуска';
-    $('#vinInputLabel').textContent=formMode==='vin'?'VIN-код автомобиля':'Параметры автомобиля';
-    $('#vinMessage').textContent='';
-  }));
-  $('#vinForm')?.addEventListener('submit',event => {
+  let formMode = 'vin';
+  $('.vin-tab').on('click', function () {
+    const $button = $(this);
+    formMode = $button.attr('data-mode');
+    $('.vin-tab').removeClass('active').attr('aria-pressed', 'false');
+    $button.addClass('active').attr('aria-pressed', 'true');
+    $('#vinInput').val('').prop('maxLength', formMode === 'vin' ? 17 : 100)
+      .attr('placeholder', formMode === 'vin' ? 'Введите VIN-код вашего автомобиля' : 'Марка, модель и год выпуска');
+    $('#vinInputLabel').text(formMode === 'vin' ? 'VIN-код автомобиля' : 'Параметры автомобиля');
+    $('#vinMessage').text('');
+  });
+  $('#vinForm').on('submit', event => {
     event.preventDefault();
-    const input=$('#vinInput');
-    const value=input.value.trim().toUpperCase();
-    const message=$('#vinMessage');
-    const valid=formMode==='vin'?/^[A-HJ-NPR-Z0-9]{17}$/.test(value):value.length>=4;
-    message.className='form-message '+(valid?'is-ok':'is-error');
+    const $input = $('#vinInput');
+    const value = $input.val().trim().toUpperCase();
+    const valid = formMode === 'vin' ? /^[A-HJ-NPR-Z0-9]{17}$/.test(value) : value.length >= 4;
+    const $message = $('#vinMessage').attr('class', 'form-message ' + (valid ? 'is-ok' : 'is-error'));
     if (!valid) {
-      message.textContent=formMode==='vin'?'Укажите VIN из 17 символов (без I, O и Q).':'Укажите марку, модель и год автомобиля.';
-      input.focus();
-    } else message.textContent='Данные введены корректно. Для получения заявок подключите форму к обработчику Laravel.';
-  });
-
-  $('#year').textContent = new Date().getFullYear();
-  renderProducts();
-  updateCounters();
-  updateNewsDots();
-})();
-
-
-(() => {
-  'use strict';
-  const button = document.getElementById('copyAddress');
-  if (!button) return;
-  const status = document.getElementById('copyAddressStatus');
-  let restoreLabel;
-  button.addEventListener('click', async () => {
-    try {
-      await navigator.clipboard.writeText(button.dataset.address);
-      clearTimeout(restoreLabel);
-      button.textContent = button.dataset.successLabel;
-      if (status) status.textContent = button.dataset.successLabel;
-      restoreLabel = setTimeout(() => {
-        button.textContent = button.dataset.defaultLabel;
-        if (status) status.textContent = '';
-      }, 2600);
-    } catch {
-      if (status) status.textContent = button.dataset.errorLabel;
+      $message.text(formMode === 'vin' ? 'Укажите VIN из 17 символов (без I, O и Q).' : 'Укажите марку, модель и год автомобиля.');
+      $input.trigger('focus');
+    } else {
+      $message.text('Данные введены корректно. Для получения заявок подключите форму к обработчику Laravel.');
     }
   });
-})();
+  $('#year').text(new Date().getFullYear());
+  renderProducts();
+  updateNewsDots();
+});
 
-
-(() => {
+jQuery(function ($) {
   'use strict';
-  const form = document.querySelector('[data-catalog-filters]');
-  if (!form) return;
-  form.addEventListener('change', event => {
-    if (event.target.matches('input[type="checkbox"]')) form.requestSubmit();
+  const $button = $('#copyAddress');
+  if (!$button.length) return;
+  const $status = $('#copyAddressStatus');
+  let restoreLabel;
+  $button.on('click', async () => {
+    try {
+      await navigator.clipboard.writeText($button.attr('data-address'));
+      clearTimeout(restoreLabel);
+      $button.add($status).text($button.attr('data-success-label'));
+      restoreLabel = setTimeout(() => {
+        $button.text($button.attr('data-default-label'));
+        $status.text('');
+      }, 2600);
+    } catch (error) { $status.text($button.attr('data-error-label')); }
   });
-  document.querySelector('[data-catalog-sort]')?.addEventListener('change', () => form.requestSubmit());
-})();
+});
 
-
-(() => {
+jQuery(function ($) {
   'use strict';
-  const panel = document.getElementById('catalog-filter-panel');
-  const toggle = document.querySelector('[data-catalog-filter-toggle]');
-  const closeButton = document.querySelector('[data-catalog-filter-close]');
-  const backdrop = document.querySelector('[data-catalog-filter-backdrop]');
-  if (!panel || !toggle || !closeButton || !backdrop) return;
+  const $form = $('[data-catalog-filters]');
+  if (!$form.length) return;
+  $form.on('change', 'input[type="checkbox"]', () => $form[0].requestSubmit());
+  $('[data-catalog-sort]').on('change', () => $form[0].requestSubmit());
+});
+
+jQuery(function ($) {
+  'use strict';
+  const $panel = $('#catalog-filter-panel');
+  const $toggle = $('[data-catalog-filter-toggle]');
+  const $closeButton = $('[data-catalog-filter-close]');
+  const $backdrop = $('[data-catalog-filter-backdrop]');
+  if (!$panel.length || !$toggle.length || !$closeButton.length || !$backdrop.length) return;
   const mobile = window.matchMedia('(max-width:680px)');
   let isOpen = false;
   let previousOverflow = '';
   function closeFilters(restoreFocus = true) {
-    if (isOpen) document.body.style.overflow = previousOverflow;
+    if (isOpen) $('body').css('overflow', previousOverflow);
     isOpen = false;
-    panel.classList.remove('is-open');
-    panel.removeAttribute('role');
-    panel.removeAttribute('aria-modal');
-    panel.inert = mobile.matches;
-    backdrop.hidden = true;
-    toggle.setAttribute('aria-expanded', 'false');
-    if (restoreFocus && mobile.matches) toggle.focus();
+    $panel.removeClass('is-open').removeAttr('role aria-modal').prop('inert', mobile.matches);
+    $backdrop.prop('hidden', true);
+    $toggle.attr('aria-expanded', 'false');
+    if (restoreFocus && mobile.matches) $toggle.trigger('focus');
   }
-  toggle.addEventListener('click', () => {
+  $toggle.on('click', () => {
     if (!mobile.matches) return;
     if (isOpen) { closeFilters(); return; }
     previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
+    $('body').css('overflow', 'hidden');
     isOpen = true;
-    panel.inert = false;
-    panel.classList.add('is-open');
-    panel.setAttribute('role', 'dialog');
-    panel.setAttribute('aria-modal', 'true');
-    backdrop.hidden = false;
-    toggle.setAttribute('aria-expanded', 'true');
-    closeButton.focus();
+    $panel.prop('inert', false).addClass('is-open').attr({role: 'dialog', 'aria-modal': 'true'});
+    $backdrop.prop('hidden', false);
+    $toggle.attr('aria-expanded', 'true');
+    $closeButton.trigger('focus');
   });
-  closeButton.addEventListener('click', () => closeFilters());
-  backdrop.addEventListener('click', () => closeFilters());
-  document.addEventListener('keydown', event => {
+  $closeButton.add($backdrop).on('click', () => closeFilters());
+  $(document).on('keydown', event => {
     if (!isOpen) return;
     if (event.key === 'Escape') { event.preventDefault(); closeFilters(); }
     if (event.key === 'Tab') {
-      const controls = [...panel.querySelectorAll('button, summary, input:not([disabled]), a[href], select')].filter(element => element.getClientRects().length > 0);
-      const first = controls[0];
-      const last = controls[controls.length - 1];
-      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
-      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
+      const $controls = $panel.find('button, summary, input:not([disabled]), a[href], select').filter(':visible');
+      const $first = $controls.first();
+      const $last = $controls.last();
+      if (event.shiftKey && document.activeElement === $first[0]) { event.preventDefault(); $last.trigger('focus'); }
+      else if (!event.shiftKey && document.activeElement === $last[0]) { event.preventDefault(); $first.trigger('focus'); }
     }
   });
-  mobile.addEventListener('change', () => closeFilters(false));
+  $(mobile).on('change', () => closeFilters(false));
   closeFilters(false);
-})();
+});

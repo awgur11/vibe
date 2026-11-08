@@ -14,7 +14,7 @@
             <h2>{{ __('Клиент') }}</h2>
             <dl>
                 @foreach(['customer_type' => 'Тип клиента', 'name' => 'Имя', 'phone' => 'Телефон', 'email' => 'Электронная почта', 'company_name' => 'Название компании', 'legal_address' => 'Юридический адрес', 'tax_id' => 'ИНН', 'kpp' => 'КПП'] as $field => $label)
-                    @if(filled($order->$field))<dt><strong>{{ __($label) }}</strong></dt><dd>{{ $field === 'customer_type' ? __(\App\Models\Order::CUSTOMER_TYPES[$order->$field] ?? $order->$field) : $order->$field }}</dd>@endif
+                    @if(filled($order->user?->$field))<dt><strong>{{ __($label) }}</strong></dt><dd>{{ $field === 'customer_type' ? __(\App\Models\Order::CUSTOMER_TYPES[$order->user?->$field] ?? $order->user?->$field) : $order->user?->$field }}</dd>@endif
                 @endforeach
             </dl>
             <h2>{{ __('Оплата и доставка') }}</h2>

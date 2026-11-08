@@ -17,14 +17,14 @@ class SiteProductController extends Controller
         $product->load('translation', 'catalog.translation', 'pictures', 'fvalues.translation', 'fvalues.filter.translation');
 
         return view('site.product', [...$siteViewData->get(), 'product' => $product, 'crumbs' => $breadcrumbService->forProduct($product),
-            'comments' => $product->comments()->where('status', 'approved')->latest('id')->paginate(10)->fragment('reviews'),
+            'comments' => $product->comments()->where('status', 1)->latest('id')->paginate(10)->fragment('reviews'),
         ]);
     }
 
     public function comment(StoreProductCommentRequest $request, Product $product): RedirectResponse
     {
         abort_unless($product->public, 404);
-        $product->comments()->create([...$request->validated(), 'status' => 'pending']);
+        $product->comments()->create([...$request->validated(), 'status' => 0]);
 
         return redirect()->to(route('product', ['product' => $product->slag]).'#reviews')->with('comment_status', __('Спасибо! Ваш отзыв отправлен на модерацию.'));
     }

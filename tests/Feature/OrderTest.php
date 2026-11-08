@@ -64,14 +64,14 @@ class OrderTest extends TestCase
         ]))->assertRedirect(route('order.checkout'))->assertSessionHasNoErrors();
         $order = Order::sole();
         $this->assertSame($entry->client_id, $order->client_id);
-        $this->assertSame('individual', $order->customer_type);
-        $this->assertSame('Олена', $order->name);
+        $this->assertSame('individual', $order->user->customer_type);
+        $this->assertSame('Олена', $order->user->name);
         $this->assertSame('cash', $order->payment_method);
         $this->assertSame('539.97', $order->total);
-        $this->assertNull($order->company_name);
-        $this->assertNull($order->legal_address);
-        $this->assertNull($order->tax_id);
-        $this->assertNull($order->kpp);
+        $this->assertNull($order->user->company_name);
+        $this->assertNull($order->user->legal_address);
+        $this->assertNull($order->user->tax_id);
+        $this->assertNull($order->user->kpp);
         $item = $order->items()->sole();
         $this->assertSame($entry->product_id, $item->product_id);
         $this->assertSame(3, $item->quantity);
@@ -91,11 +91,11 @@ class OrderTest extends TestCase
             'tax_id' => '001234567890', 'kpp' => '001234567', 'name' => 'Олена Петренко', 'payment_method' => 'bank_transfer',
         ]))->assertRedirect(route('order.checkout'))->assertSessionHasNoErrors();
         $order = Order::sole();
-        $this->assertSame('ТОВ Приклад', $order->company_name);
-        $this->assertSame('Київ, Тестова 12', $order->legal_address);
-        $this->assertSame('001234567890', $order->tax_id);
-        $this->assertSame('001234567', $order->kpp);
-        $this->assertSame('Олена Петренко', $order->name);
+        $this->assertSame('ТОВ Приклад', $order->user->company_name);
+        $this->assertSame('Київ, Тестова 12', $order->user->legal_address);
+        $this->assertSame('001234567890', $order->user->tax_id);
+        $this->assertSame('001234567', $order->user->kpp);
+        $this->assertSame('Олена Петренко', $order->user->name);
         $this->assertSame('bank_transfer', $order->payment_method);
     }
 
@@ -120,10 +120,10 @@ class OrderTest extends TestCase
         $this->withCookie(Cart::CLIENT_COOKIE, $entry->client_id)->post(route('order.store'), $data)
             ->assertRedirect(route('order.checkout'))->assertSessionHasNoErrors();
         $order = Order::sole();
-        $this->assertNull($order->email);
-        $this->assertNull($order->legal_address);
-        $this->assertNull($order->tax_id);
-        $this->assertNull($order->kpp);
+        $this->assertMatchesRegularExpression('/^fake.+@gm\.com$/', $order->user->email);
+        $this->assertNull($order->user->legal_address);
+        $this->assertNull($order->user->tax_id);
+        $this->assertNull($order->user->kpp);
     }
 
     public function test_empty_or_foreign_carts_cannot_be_ordered_using_a_forged_client_id(): void
@@ -192,7 +192,7 @@ class OrderTest extends TestCase
         $mail = new OrderPlaced($order->load('items', 'delivery'));
         $mail->assertSeeInHtml($order->items->first()->title);
         $mail->assertSeeInHtml('150.00');
-        $mail->assertSeeInHtml($order->phone);
+        $mail->assertSeeInHtml($order->user->phone);
         $mail->assertSeeInHtml(__(Order::DELIVERY_METHODS['pickup']));
         $mail->assertSeeInText('150.00');
     }

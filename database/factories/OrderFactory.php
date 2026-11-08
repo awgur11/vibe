@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Models\Order;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
 
@@ -14,10 +15,7 @@ class OrderFactory extends Factory
     {
         return [
             'client_id' => (string) Str::uuid(),
-            'customer_type' => 'individual',
-            'name' => fake()->name(),
-            'phone' => '+380501234567',
-            'email' => fake()->safeEmail(),
+            'user_id' => User::factory(),
             'payment_method' => 'cash',
             'total' => '100.00',
             'status' => 'new',

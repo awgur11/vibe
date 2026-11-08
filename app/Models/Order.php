@@ -5,6 +5,7 @@ namespace App\Models;
 use Database\Factories\OrderFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
@@ -21,11 +22,16 @@ class Order extends Model
 
     public const array DELIVERY_METHODS = ['nova_poshta' => 'Новая почта', 'pickup' => 'Самовывоз'];
 
-    protected $fillable = ['user_id', 'client_id', 'customer_type', 'name', 'phone', 'email', 'company_name', 'legal_address', 'tax_id', 'kpp', 'payment_method', 'total', 'status'];
+    protected $fillable = ['user_id', 'client_id', 'payment_method', 'total', 'status'];
 
     protected function casts(): array
     {
         return ['total' => 'decimal:2'];
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class)->withDefault();
     }
 
     public function delivery(): HasOne

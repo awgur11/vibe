@@ -1,195 +1,156 @@
-(() => {
+jQuery(function ($) {
   'use strict';
-  const form = document.querySelector('[data-checkout-form]');
-  if (!form) return;
-  const company = form.querySelector('[data-checkout-company]');
-  const nameLabel = form.querySelector('[data-checkout-name-label]');
-  const customerTypes = [...form.querySelectorAll('input[name="customer_type"]')];
-  const paymentsGroup = form.querySelector('[data-checkout-payments]');
-  const payments = [...paymentsGroup.querySelectorAll('input[name="payment_method"]')];
+  const $form = $('[data-checkout-form]');
+  if (!$form.length) return;
+  const $company = $form.find('[data-checkout-company]');
+  const $nameLabel = $form.find('[data-checkout-name-label]');
+  const $customerTypes = $form.find('input[name="customer_type"]');
+  const $paymentsGroup = $form.find('[data-checkout-payments]');
+  const $payments = $paymentsGroup.find('input[name="payment_method"]');
   function updateCustomerType() {
-    const isCompany = customerTypes.some(input => input.checked && input.value === 'company');
-    company.hidden = !isCompany;
-    company.querySelectorAll('input, textarea').forEach(input => {
-      input.disabled = !isCompany;
-      input.required = isCompany && input.hasAttribute('data-company-required');
+    const isCompany = $customerTypes.filter(':checked').val() === 'company';
+    $company.prop('hidden', !isCompany).find('input, textarea').each(function () {
+      $(this).prop({disabled: !isCompany, required: isCompany && $(this).is('[data-company-required]')});
     });
-    nameLabel.textContent = isCompany ? nameLabel.dataset.companyLabel : nameLabel.dataset.individualLabel;
+    $nameLabel.text($nameLabel.attr(isCompany ? 'data-company-label' : 'data-individual-label'));
   }
-  const validateDelivery = setupDelivery(form);
-  customerTypes.forEach(input => input.addEventListener('change', updateCustomerType));
-  payments.forEach(input => input.addEventListener('change', () => {
-    if (input.checked) payments.forEach(other => { if (other !== input) other.checked = false; });
-    payments.forEach(other => other.setCustomValidity(''));
-  }));
+  const validateDelivery = setupDelivery();
+  $customerTypes.on('change', updateCustomerType);
+  $payments.on('change', function () {
+    if (this.checked) $payments.not(this).prop('checked', false);
+    $payments.each(function () { this.setCustomValidity(''); });
+  });
   let submitting = false;
-  form.addEventListener('submit', async event => {
+  $form.on('submit', async function (event) {
     event.preventDefault();
-    if (submitting) return;
-    if (!validateDelivery()) { event.preventDefault(); return; }
-    if (!payments.some(input => input.checked)) {
-      event.preventDefault();
-      payments[0].setCustomValidity(paymentsGroup.dataset.requiredLabel);
-      payments[0].reportValidity();
+    if (submitting || !validateDelivery()) return;
+    if (!$payments.is(':checked')) {
+      $payments[0].setCustomValidity($paymentsGroup.attr('data-required-label'));
+      $payments[0].reportValidity();
       return;
     }
-    if (!form.reportValidity()) { event.preventDefault(); return; }
-    const submitButton = form.querySelector('button[type="submit"]');
-    const status = form.querySelector('[data-checkout-status]');
+    if (!this.reportValidity()) return;
+    const $submitButton = $form.find('button[type="submit"]');
+    const $status = $form.find('[data-checkout-status]');
     submitting = true;
-    submitButton.disabled = true;
-    status.hidden = true;
+    $submitButton.prop('disabled', true);
+    $status.prop('hidden', true);
     try {
-      const response = await fetch(form.dataset.csrfUrl, {
-        headers: {'Accept': 'application/json'},
-        credentials: 'same-origin',
-        cache: 'no-store',
-        signal: AbortSignal.timeout(15000),
-      });
-      if (!response.ok) throw new Error('Session refresh failed');
-      const data = await response.json();
+      const data = await $.ajax({url: $form.attr('data-csrf-url'), cache: false, dataType: 'json', timeout: 15000});
       if (typeof data.token !== 'string' || !data.token) throw new Error('Missing CSRF token');
-      form.querySelector('input[name="_token"]').value = data.token;
-      const meta = document.querySelector('meta[name="csrf-token"]');
-      if (meta) meta.content = data.token;
-      HTMLFormElement.prototype.submit.call(form);
+      $form.find('input[name="_token"]').val(data.token);
+      $('meta[name="csrf-token"]').attr('content', data.token);
+      HTMLFormElement.prototype.submit.call(this);
     } catch (error) {
-      status.textContent = form.dataset.csrfError;
-      status.hidden = false;
+      $status.text($form.attr('data-csrf-error')).prop('hidden', false);
       submitting = false;
-      submitButton.disabled = false;
+      $submitButton.prop('disabled', false);
     }
   });
   updateCustomerType();
 
-  function setupDelivery(checkoutForm) {
-    const delivery = checkoutForm.querySelector('[data-checkout-delivery]');
-    if (!delivery) return () => true;
-    const labels = delivery.dataset;
-    const methods = [...delivery.querySelectorAll('input[name="delivery_method"]')];
-    const novaFields = delivery.querySelector('[data-nova-poshta-fields]');
-    const pickup = delivery.querySelector('[data-pickup-address]');
-    const cityField = delivery.querySelector('[data-city-field]');
-    const city = delivery.querySelector('#delivery-city-input');
-    const cityRef = delivery.querySelector('#delivery-city-ref');
-    const suggestions = delivery.querySelector('#delivery-city-options');
-    const warehouse = delivery.querySelector('#delivery-warehouse');
-    const status = delivery.querySelector('[data-delivery-status]');
+  function setupDelivery() {
+    const $delivery = $form.find('[data-checkout-delivery]');
+    if (!$delivery.length) return () => true;
+    const labels = $delivery.data();
+    const $methods = $delivery.find('input[name="delivery_method"]');
+    const $novaFields = $delivery.find('[data-nova-poshta-fields]');
+    const $pickup = $delivery.find('[data-pickup-address]');
+    const $cityField = $delivery.find('[data-city-field]');
+    const $city = $delivery.find('#delivery-city-input');
+    const $cityRef = $delivery.find('#delivery-city-ref');
+    const $suggestions = $delivery.find('#delivery-city-options');
+    const $warehouse = $delivery.find('#delivery-warehouse');
+    const $status = $delivery.find('[data-delivery-status]');
     let cities = [];
     let activeCity = -1;
     let searchTimer;
-    let cityController;
-    let warehouseController;
+    let cityRequest;
+    let warehouseRequest;
     let cityVersion = 0;
     let warehouseVersion = 0;
     let warehouseReady = false;
-    const isNovaPoshta = () => methods.some(method => method.checked && method.value === 'nova_poshta');
+    const isNovaPoshta = () => $methods.filter(':checked').val() === 'nova_poshta';
     function hideSuggestions() {
-      suggestions.hidden = true;
-      city.setAttribute('aria-expanded', 'false');
-      city.removeAttribute('aria-activedescendant');
+      $suggestions.prop('hidden', true);
+      $city.attr('aria-expanded', 'false').removeAttr('aria-activedescendant');
       activeCity = -1;
     }
     function cancelSearch() {
       clearTimeout(searchTimer);
-      cityController?.abort();
       cityVersion++;
-    }
-    function warehousePlaceholder() {
-      const option = document.createElement('option');
-      option.value = '';
-      option.textContent = labels.warehouseRequiredLabel;
-      warehouse.replaceChildren(option);
+      cityRequest?.abort();
     }
     function resetWarehouse() {
-      warehouseController?.abort();
       warehouseVersion++;
+      warehouseRequest?.abort();
       warehouseReady = false;
-      warehouse.disabled = true;
-      warehouse.setCustomValidity('');
-      warehousePlaceholder();
+      $warehouse.prop('disabled', true).empty()
+        .append($('<option>').val('').text(labels.warehouseRequiredLabel));
+      $warehouse[0].setCustomValidity('');
     }
-    async function lookup(url, params, signal) {
-      const endpoint = new URL(url, window.location.href);
-      Object.entries(params).forEach(([name, value]) => endpoint.searchParams.set(name, value));
-      const response = await fetch(endpoint, {headers: {'Accept': 'application/json'}, credentials: 'same-origin', signal});
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.message || labels.errorLabel);
-      return data;
+    function lookup(url, params) {
+      return $.ajax({url, data: params, dataType: 'json'});
     }
     async function loadWarehouses(ref, selected = '') {
       resetWarehouse();
       const version = warehouseVersion;
-      warehouseController = new AbortController();
-      status.textContent = labels.loadingLabel;
+      warehouseRequest = lookup(labels.warehousesUrl, {city_ref: ref});
+      $status.text(labels.loadingLabel);
       try {
-        const data = await lookup(labels.warehousesUrl, {city_ref: ref}, warehouseController.signal);
-        if (version !== warehouseVersion || !isNovaPoshta() || cityRef.value !== ref) return;
-        data.warehouses.forEach(item => {
-          const option = document.createElement('option');
-          option.value = item.ref;
-          option.textContent = item.label;
-          warehouse.append(option);
-        });
+        const data = await warehouseRequest;
+        if (version !== warehouseVersion || !isNovaPoshta() || $cityRef.val() !== ref) return;
+        data.warehouses.forEach(item => $('<option>').val(item.ref).text(item.label).appendTo($warehouse));
         warehouseReady = data.warehouses.length > 0;
-        warehouse.disabled = !warehouseReady;
-        if (data.warehouses.some(item => item.ref === selected)) warehouse.value = selected;
-        status.textContent = warehouseReady ? '' : labels.noWarehousesLabel;
+        $warehouse.prop('disabled', !warehouseReady);
+        if (data.warehouses.some(item => item.ref === selected)) $warehouse.val(selected);
+        $status.text(warehouseReady ? '' : labels.noWarehousesLabel);
       } catch (error) {
-        if (version === warehouseVersion && error.name !== 'AbortError' && isNovaPoshta()) status.textContent = labels.errorLabel;
+        if (version === warehouseVersion && error.statusText !== 'abort' && isNovaPoshta()) $status.text(labels.errorLabel);
       }
     }
     function selectCity(item) {
       cancelSearch();
       hideSuggestions();
-      city.value = item.label;
-      cityRef.value = item.ref;
-      city.setCustomValidity('');
-      city.focus();
+      $city.val(item.label).trigger('focus');
+      $cityRef.val(item.ref);
+      $city[0].setCustomValidity('');
       loadWarehouses(item.ref);
     }
     async function searchCities(query, version) {
-      cityController = new AbortController();
-      status.textContent = labels.loadingLabel;
+      cityRequest = lookup(labels.citiesUrl, {q: query.slice(0, 100)});
+      $status.text(labels.loadingLabel);
       try {
-        const data = await lookup(labels.citiesUrl, {q: query.slice(0, 100)}, cityController.signal);
+        const data = await cityRequest;
         if (version !== cityVersion || !isNovaPoshta()) return;
         cities = data.cities.slice(0, 10);
-        suggestions.replaceChildren();
+        $suggestions.empty();
         cities.forEach((item, index) => {
-          const option = document.createElement('button');
-          option.type = 'button';
-          option.id = `delivery-city-option-${index}`;
-          option.tabIndex = -1;
-          option.setAttribute('role', 'option');
-          option.setAttribute('aria-selected', 'false');
-          option.textContent = item.label;
-          option.addEventListener('mousedown', event => event.preventDefault());
-          option.addEventListener('click', () => selectCity(item));
-          suggestions.append(option);
+          $('<button>').attr({type: 'button', id: `delivery-city-option-${index}`, tabindex: -1,
+            role: 'option', 'aria-selected': 'false'}).text(item.label)
+            .on('mousedown', event => event.preventDefault()).on('click', () => selectCity(item)).appendTo($suggestions);
         });
-        suggestions.hidden = cities.length === 0;
-        city.setAttribute('aria-expanded', String(cities.length > 0));
-        status.textContent = cities.length ? '' : labels.noCitiesLabel;
+        $suggestions.prop('hidden', cities.length === 0);
+        $city.attr('aria-expanded', String(cities.length > 0));
+        $status.text(cities.length ? '' : labels.noCitiesLabel);
       } catch (error) {
-        if (version === cityVersion && error.name !== 'AbortError' && isNovaPoshta()) status.textContent = labels.errorLabel;
+        if (version === cityVersion && error.statusText !== 'abort' && isNovaPoshta()) $status.text(labels.errorLabel);
       }
     }
-    city.addEventListener('input', () => {
+    $city.on('input', function () {
       cancelSearch();
       hideSuggestions();
-      cityRef.value = '';
-      city.setCustomValidity('');
+      $cityRef.val('');
+      this.setCustomValidity('');
       resetWarehouse();
-      const query = city.value.trim();
-      status.textContent = query.length < 2 ? labels.minimumLabel : '';
+      const query = $city.val().trim();
+      $status.text(query.length < 2 ? labels.minimumLabel : '');
       if (query.length >= 2) {
         const version = cityVersion;
         searchTimer = setTimeout(() => searchCities(query, version), 300);
       }
-    });
-    city.addEventListener('keydown', event => {
-      if (suggestions.hidden || !cities.length) return;
+    }).on('keydown', event => {
+      if ($suggestions.prop('hidden') || !cities.length) return;
       if (event.key === 'Escape') { hideSuggestions(); return; }
       if (event.key === 'Enter') {
         event.preventDefault();
@@ -198,52 +159,51 @@
         event.preventDefault();
         activeCity = activeCity < 0 ? (event.key === 'ArrowDown' ? 0 : cities.length - 1)
           : (activeCity + (event.key === 'ArrowDown' ? 1 : -1) + cities.length) % cities.length;
-        [...suggestions.children].forEach((option, index) => option.setAttribute('aria-selected', String(index === activeCity)));
-        city.setAttribute('aria-activedescendant', suggestions.children[activeCity].id);
-        suggestions.children[activeCity].scrollIntoView({block: 'nearest'});
+        const $options = $suggestions.children().attr('aria-selected', 'false');
+        const $active = $options.eq(activeCity).attr('aria-selected', 'true');
+        $city.attr('aria-activedescendant', $active.attr('id'));
+        $active[0].scrollIntoView({block: 'nearest'});
       }
     });
-    cityField.addEventListener('focusout', event => { if (!cityField.contains(event.relatedTarget)) hideSuggestions(); });
-    warehouse.addEventListener('change', () => warehouse.setCustomValidity(''));
+    $cityField.on('focusout', event => { if (!$(event.relatedTarget).closest($cityField).length) hideSuggestions(); });
+    $warehouse.on('change', function () { this.setCustomValidity(''); });
     function updateMethod() {
       const nova = isNovaPoshta();
-      novaFields.hidden = !nova;
-      pickup.hidden = nova;
-      city.disabled = !nova;
-      city.required = nova;
-      cityRef.disabled = !nova;
-      warehouse.required = nova;
-      warehouse.disabled = !nova || !warehouseReady;
-      city.setCustomValidity('');
-      warehouse.setCustomValidity('');
+      $novaFields.prop('hidden', !nova);
+      $pickup.prop('hidden', nova);
+      $city.prop({disabled: !nova, required: nova});
+      $cityRef.prop('disabled', !nova);
+      $warehouse.prop({required: nova, disabled: !nova || !warehouseReady});
+      $city[0].setCustomValidity('');
+      $warehouse[0].setCustomValidity('');
       if (!nova) {
         cancelSearch();
-        warehouseController?.abort();
         warehouseVersion++;
+        warehouseRequest?.abort();
         hideSuggestions();
-        status.textContent = '';
-      } else if (cityRef.value && !warehouseReady) {
-        loadWarehouses(cityRef.value, warehouse.dataset.selectedWarehouse || '');
+        $status.text('');
+      } else if ($cityRef.val() && !warehouseReady) {
+        loadWarehouses($cityRef.val(), $warehouse.attr('data-selected-warehouse') || '');
       }
     }
-    methods.forEach(method => method.addEventListener('change', updateMethod));
+    $methods.on('change', updateMethod);
     updateMethod();
     return () => {
       if (!isNovaPoshta()) return true;
-      if (!cityRef.value) {
-        city.setCustomValidity(labels.cityRequiredLabel);
-        city.reportValidity();
+      if (!$cityRef.val()) {
+        $city[0].setCustomValidity(labels.cityRequiredLabel);
+        $city[0].reportValidity();
         return false;
       }
-      if (!warehouseReady || !warehouse.value) {
-        status.textContent = labels.warehouseRequiredLabel;
-        if (!warehouse.disabled) {
-          warehouse.setCustomValidity(labels.warehouseRequiredLabel);
-          warehouse.reportValidity();
+      if (!warehouseReady || !$warehouse.val()) {
+        $status.text(labels.warehouseRequiredLabel);
+        if (!$warehouse.prop('disabled')) {
+          $warehouse[0].setCustomValidity(labels.warehouseRequiredLabel);
+          $warehouse[0].reportValidity();
         }
         return false;
       }
       return true;
     };
   }
-})();
+});

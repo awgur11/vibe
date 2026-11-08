@@ -17,6 +17,7 @@ use App\Http\Controllers\FilterController;
 use App\Http\Controllers\FvalueController;
 use App\Http\Controllers\LanguageController;
 use App\Http\Controllers\NovaPoshtaController;
+use App\Http\Controllers\OneCController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\PictureController;
@@ -30,7 +31,9 @@ use App\Http\Controllers\SiteProductController;
 use App\Http\Controllers\SlideController;
 use App\Http\Controllers\TranslationController;
 use App\Http\Middleware\EnsureCartClient;
+use App\Http\Middleware\EnsureUserIsAdmin;
 use App\Services\SiteSetLocale;
+use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -55,7 +58,7 @@ Route::middleware('auth')->group(function (): void {
 });
 
 Route::middleware(['auth', 'auth.session'])->group(function (): void {
-    Route::prefix('adminzone')->middleware('verified')->group(function (): void {
+    Route::prefix('adminzone')->middleware(['verified', EnsureUserIsAdmin::class])->group(function (): void {
         Route::view('/', 'dashboard')->name('dashboard');
 
         Route::patch('/reorder/{resource}', ReorderController::class)->where('resource', '[a-z0-9_-]+')->name('reorder.update');
@@ -135,14 +138,17 @@ Route::group(['prefix' => config('app.url_prefix'), 'middleware' => ['redirect.b
     });
     Route::get('/product/{product:slag}', [SiteProductController::class, 'show'])->name('product');
     Route::post('/product/{product:slag}/comments', [SiteProductController::class, 'comment'])->middleware('throttle:5,10')->name('product.comments.store');
+
     Route::get('/comparison/state', [ComparisonController::class, 'state'])->name('comparison.state');
     Route::get('/comparison/{catalog}', [ComparisonController::class, 'show'])->name('comparison.show');
     Route::post('/comparison/products/{product}', [ComparisonController::class, 'store'])->name('comparison.store');
     Route::delete('/comparison/products/{product}', [ComparisonController::class, 'destroy'])->name('comparison.destroy');
+
     Route::get('/favorites', [FavoriteController::class, 'index'])->name('favorites.index');
     Route::get('/favorites/state', [FavoriteController::class, 'state'])->name('favorites.state');
     Route::post('/favorites/{product}', [FavoriteController::class, 'store'])->name('favorites.store');
     Route::delete('/favorites/{product}', [FavoriteController::class, 'destroy'])->name('favorites.destroy');
+
     Route::get('/order', [OrderController::class, 'checkout'])->name('order.checkout');
     Route::get('/order/csrf-token', [OrderController::class, 'csrfToken'])->name('order.csrf-token');
     Route::post('/order', [OrderController::class, 'store'])->name('order.store');
@@ -156,3 +162,9 @@ Route::group(['prefix' => config('app.url_prefix'), 'middleware' => ['redirect.b
     Route::get('/{blogSlag}/{articleSlag}', [SiteController::class, 'article'])->name('article');
     Route::get('/{slag}', [SiteController::class, 'page'])->name('page');
 });
+
+Route::post('/api/products', OneCController::class)->withoutMiddleware([PreventRequestForgery::class])->middleware('throttle:30,1')->name('onec.products');
+Route::post('/api/prices', OneCController::class)->withoutMiddleware([PreventRequestForgery::class])->middleware('throttle:30,1')->name('onec.prices');
+
+Route::get('/public/user_files/orders/xml/M{order}.xml', [OneCController::class, 'order'])->middleware('throttle:30,1')->name('onec.orders.xml');
+// public/user_files/orders/xml/

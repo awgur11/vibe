@@ -66,7 +66,10 @@
                 <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V2h6v2M9 9h6M9 13h6M9 17h4"/></svg>
                 {{ __('Заказы') }}
             </a>
-            <a href="{{ route('product-comments.index') }}" class="{{ request()->routeIs('product-comments.*') ? 'selected' : '' }}">{{ __('Отзывы о товарах') }}</a>
+            <a href="{{ route('product-comments.index') }}" class="{{ request()->routeIs('product-comments.*') ? 'selected' : '' }}" @if(request()->routeIs('product-comments.*')) aria-current="page" @endif>
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M21 11a8 8 0 0 1-8 8H7l-4 3V11a9 9 0 0 1 18 0Z"/><path d="M7 9h10M7 13h6"/></svg>
+                {{ __('Комментарии') }}
+            </a>
             <details class="settings-nav" @if(request()->routeIs('settings.*')) open @endif>
                 <summary>
                     <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/><circle cx="9" cy="6" r="2" fill="white"/><circle cx="15" cy="12" r="2" fill="white"/><circle cx="8" cy="18" r="2" fill="white"/></svg>
