@@ -18,7 +18,7 @@ class OneCController extends Controller
         // abort_unless($expected !== '' && hash_equals($expected, (string) $request->header('X-API-Key')), 401);
         $path = $service->exportOrder($order);
 
-        return Storage::disk(config('onec.orders_disk'))->download($path, 'M'.$order->id.'.xml', ['Content-Type' => 'application/xml; charset=UTF-8', 'Cache-Control' => 'no-store']);
+        return Storage::disk(config('onec.orders_disk'))->response($path, 'M'.$order->id.'.xml', ['Content-Type' => 'application/xml; charset=UTF-8', 'Cache-Control' => 'no-store']);
     }
 
     public function __invoke(Request $request, OneCService $service): JsonResponse

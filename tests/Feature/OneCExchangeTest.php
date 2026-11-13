@@ -123,6 +123,52 @@ class OneCExchangeTest extends TestCase
             ->assertHeader('Content-Type', 'application/xml; charset=UTF-8');
     }
 
+    public function test_additional_prices_import_preserve_missing_values_and_accept_zero(): void
+    {
+        $product = Product::factory()->create(['one_c_id' => 'prices', 'price' => 100, 'min_price' => 60, 'opt_price' => 80]);
+        foreach (['/api/prices', '/api/products'] as $url) {
+            $catalog = $url === '/api/products';
+            $wrap = fn (string $prices): string => '<request><api_key>test-key</api_key><КоммерческаяИнформация>'.($catalog ? '<Каталог>' : '').'<Товары><Товар><Ид>prices</Ид><Наименование>Product</Наименование><Цены>'.$prices.'</Цены></Товар></Товары>'.($catalog ? '</Каталог>' : '').'</КоммерческаяИнформация></request>';
+            $this->xml($url, $wrap('<ЦенаМин>65.25</ЦенаМин><ЦенаОпт>85.50</ЦенаОпт>'))->assertOk();
+            $this->assertSame('65.25', $product->fresh()->min_price);
+            $this->assertSame('85.50', $product->fresh()->opt_price);
+            $this->xml($url, $wrap('<Цена>110</Цена>'))->assertOk();
+            $this->assertSame('65.25', $product->fresh()->min_price);
+            $this->assertSame('85.50', $product->fresh()->opt_price);
+            foreach (['ЦенаМин', 'ЦенаОпт'] as $field) {
+                foreach (['-1', 'invalid'] as $value) {
+                    $this->xml($url, $wrap('<'.$field.'>'.$value.'</'.$field.'>'))->assertUnprocessable();
+                    $this->assertSame('65.25', $product->fresh()->min_price);
+                    $this->assertSame('85.50', $product->fresh()->opt_price);
+                }
+            }
+            $this->xml($url, $wrap('<ЦенаМин>0</ЦенаМин><ЦенаОпт>0</ЦенаОпт>'))->assertOk();
+            $this->assertSame('0.00', $product->fresh()->min_price);
+            $this->assertSame('0.00', $product->fresh()->opt_price);
+        }
+    }
+
+    public function test_import_normalizes_numbers_and_preserves_empty_fields(): void
+    {
+        foreach (['/api/prices', '/api/products'] as $url) {
+            $product = Product::factory()->create(['one_c_id' => $url, 'price' => 100, 'min_price' => 60, 'opt_price' => 80, 'available' => 0]);
+            $catalog = $url === '/api/products';
+            $wrap = fn (string $fields): string => '<request><api_key>test-key</api_key><КоммерческаяИнформация>'.($catalog ? '<Каталог>' : '').'<Товары><Товар><Ид>'.$url.'</Ид><Наименование>Product</Наименование>'.$fields.'</Товар></Товары>'.($catalog ? '</Каталог>' : '').'</КоммерческаяИнформация></request>';
+            $this->xml($url, $wrap('<Цены><Цена> 1 170,00 </Цена><ЦенаМин>1&#160;050,25</ЦенаМин><ЦенаОпт>1&#8239;100,50</ЦенаОпт></Цены><Остатки><Остаток>2,00</Остаток></Остатки>'))->assertOk();
+            $this->assertSame('1170.00', $product->fresh()->price);
+            $this->assertSame('1050.25', $product->fresh()->min_price);
+            $this->assertSame('1100.50', $product->fresh()->opt_price);
+            $this->assertSame(0, $product->fresh()->available);
+            $this->xml($url, $wrap('<Цены><Цена/><ЦенаМин> </ЦенаМин><ЦенаОпт/></Цены><Остатки><Остаток/></Остатки>'))->assertOk();
+            $this->assertSame('1170.00', $product->fresh()->price);
+            $this->assertSame('1050.25', $product->fresh()->min_price);
+            $this->assertSame('1100.50', $product->fresh()->opt_price);
+            $this->assertSame(0, $product->fresh()->available);
+            $this->xml($url, $wrap('<Остатки><Остаток>-4,00</Остаток></Остатки>'))->assertOk();
+            $this->assertSame(2, $product->fresh()->available);
+        }
+    }
+
     private function xml(string $url, string $content): TestResponse
     {
         return $this->call('POST', $url, [], [], [], ['CONTENT_TYPE' => 'application/xml', 'HTTP_ACCEPT' => 'application/json'], $content);

@@ -25,11 +25,17 @@
                 @error('available')<p class="field-error">{{ $message }}</p>@enderror
             </div>
             @include('admin.details.form.input', ['name' => 'articule', 'title' => __('Артикул'), 'languages' => false, 'value' => $product])
+            @include('admin.details.form.input', ['name' => 'one_c_id', 'title' => 'id в 1С', 'languages' => false, 'value' => $product])
             @include('admin.details.form.input', ['name' => 'position', 'title' => __('Позиція'), 'languages' => false, 'value' => $product, 'type' => 'number', 'min' => 0, 'required' => false, 'data' => ['max' => '4294967295']])
+
             @include('admin.details.form.input', ['name' => 'slag', 'title' => 'slag', 'languages' => false, 'value' => $product, 'note' => __('Якщо поле порожнє, адреса формується з назви.')])
+
             @include('admin.details.form.input', ['name' => 'price', 'title' => __('Ціна'), 'languages' => false, 'value' => $product, 'type' => 'number', 'min' => 0, 'required' => true, 'data' => ['step' => '0.01', 'max' => '9999999999.99']])
+
             @include('admin.details.form.input', ['name' => 'discount', 'title' => __('Знижка, %'), 'languages' => false, 'value' => $product, 'type' => 'number', 'min' => 0, 'required' => true, 'data' => ['step' => '0.01', 'max' => '100']])
             <div class="field"><label for="final_price">{{ __('Кінцева ціна') }}</label><input id="final_price" value="{{ $product->final_price }}" readonly><p class="hint">{{ __('Розраховується автоматично з ціни та відсотка знижки.') }}</p></div>
+            @include('admin.details.form.input', ['name' => 'min_price', 'title' => __('Мінімальна ціна'), 'languages' => false, 'value' => $product, 'type' => 'number', 'min' => 0, 'required' => true, 'data' => ['step' => '0.01', 'max' => '9999999999.99']])
+            @include('admin.details.form.input', ['name' => 'opt_price', 'title' => __('Оптова ціна'), 'languages' => false, 'value' => $product, 'type' => 'number', 'min' => 0, 'required' => true, 'data' => ['step' => '0.01', 'max' => '9999999999.99']])
         </div>
         @include('admin.details.form.input', ['name' => 'title', 'title' => __('Назва'), 'value' => $product, 'required' => true])
         @include('admin.details.form.textarea', ['name' => 'description', 'title' => __('Опис'), 'value' => $product, 'rows' => 8, 'summernote' => true])

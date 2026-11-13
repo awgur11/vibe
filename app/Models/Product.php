@@ -16,7 +16,7 @@ class Product extends Model
     /** @use HasFactory<ProductFactory> */
     use HasFactory;
 
-    protected $fillable = ['catalog_id', 'available', 'articule', 'slag', 'price', 'discount', 'public', 'popular', 'position'];
+    protected $fillable = ['catalog_id', 'available', 'articule', 'slag', 'price', 'min_price', 'opt_price', 'discount', 'public', 'popular', 'position', 'one_c_id'];
 
     public const array AVAILABILITY = [
         0 => 'У наявності',
@@ -26,7 +26,7 @@ class Product extends Model
 
     protected function casts(): array
     {
-        return ['available' => 'integer', 'catalog_id' => 'integer', 'price' => 'decimal:2', 'discount' => 'decimal:2', 'final_price' => 'decimal:2', 'public' => 'boolean', 'popular' => 'boolean', 'position' => 'integer'];
+        return ['available' => 'integer', 'catalog_id' => 'integer', 'price' => 'decimal:2', 'min_price' => 'decimal:2', 'opt_price' => 'decimal:2', 'discount' => 'decimal:2', 'final_price' => 'decimal:2', 'public' => 'boolean', 'popular' => 'boolean', 'position' => 'integer'];
     }
 
     protected $appends = ['preview', 'html_available'];

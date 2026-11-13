@@ -49,9 +49,21 @@ class OneCService
             if (trim((string) $node->{'Ид'}) === '' || (! $pricesOnly && trim((string) $node->{'Наименование'}) === '')) {
                 throw ValidationException::withMessages(['xml' => 'Product ID and name are required.']);
             }
-            foreach ([$node->{'Цены'}->{'Цена'}, $node->{'Остатки'}->{'Остаток'}] as $number) {
-                if (isset($number[0]) && (! is_numeric((string) $number) || (float) $number < 0)) {
-                    throw ValidationException::withMessages(['xml' => 'Invalid price or stock.']);
+            foreach (['Цены' => ['Цена', 'ЦенаМин', 'ЦенаОпт'], 'Остатки' => ['Остаток']] as $group => $fields) {
+                foreach ($fields as $field) {
+                    if (! isset($node->{$group}->{$field})) {
+                        continue;
+                    }
+                    $value = str_replace(["\u{00A0}", "\u{202F}", ' ', ','], ['', '', '', '.'], trim((string) $node->{$group}->{$field}));
+                    if ($value === '') {
+                        unset($node->{$group}->{$field});
+
+                        continue;
+                    }
+                    if (! is_numeric($value) || ! is_finite((float) $value) || ($group === 'Цены' && (float) $value < 0)) {
+                        throw ValidationException::withMessages(['xml' => 'Invalid price or stock.']);
+                    }
+                    $node->{$group}->{$field} = $group === 'Остатки' && (float) $value < 0 ? '0' : $value;
                 }
             }
         }
@@ -73,8 +85,10 @@ class OneCService
                     $products->push($product);
                 }
                 foreach ($products as $product) {
-                    if (isset($node->{'Цены'}->{'Цена'})) {
-                        $product->price = (string) $node->{'Цены'}->{'Цена'};
+                    foreach (['Цена' => 'price', 'ЦенаМин' => 'min_price', 'ЦенаОпт' => 'opt_price'] as $xmlField => $attribute) {
+                        if (isset($node->{'Цены'}->{$xmlField})) {
+                            $product->{$attribute} = (string) $node->{'Цены'}->{$xmlField};
+                        }
                     }
                     if (isset($node->{'Остатки'}->{'Остаток'})) {
                         $product->available = (float) $node->{'Остатки'}->{'Остаток'} > 0 ? 0 : 2;
